@@ -1,0 +1,6 @@
+➤ 用 Python 啟動：
+cd "D:/Ting/javascript"
+python -m http.server 8080
+
+➤ 然後在瀏覽器打開：
+http://localhost:8080/你的檔名.html

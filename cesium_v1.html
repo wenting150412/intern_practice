@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cesium 切換 I3S 與底圖</title>
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
+  <style>
+    html, body, #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #toggleLayerBtn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <button id="toggleLayerBtn">切換 I3S 圖層 + 電子地圖底圖</button>
+
+  <script>
+    // ✅ 替換成你的 Cesium token
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
+
+    // ✅ 初始化 Cesium Viewer
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+      terrain: Cesium.Terrain.fromWorldTerrain(),
+      animation: false,
+      baseLayerPicker: false,
+      timeline: false,
+    });
+
+    // ✅ 初始視角：台中市
+    viewer.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(120.6839, 24.1371, 1500),
+      orientation: {
+        heading: Cesium.Math.toRadians(0),
+        pitch: Cesium.Math.toRadians(-90),
+        roll: 0
+      }
+    });
+
+    // ✅ HomeButton 回台灣上空
+    viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function (e) {
+      e.cancel = true;
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(120.65, 24.15, 3000000),
+        orientation: {
+          heading: Cesium.Math.toRadians(0),
+          pitch: Cesium.Math.toRadians(-90),
+          roll: 0
+        }
+      });
+    });
+
+    // 👉 圖層切換邏輯
+    let isSwitched = false;
+    let originalBaseLayer = viewer.imageryLayers.get(0); // 初始底圖
+    let i3sLayer = null;
+
+    document.getElementById("toggleLayerBtn").addEventListener("click", async function () {
+      if (!isSwitched) {
+        // ✅ 先移除原本底圖
+        viewer.imageryLayers.remove(originalBaseLayer, false);
+
+        // ✅ 載入台灣 e-Map 電子地圖
+        const emapLayer = new Cesium.WebMapTileServiceImageryProvider({
+          url: "http://localhost:8080/https://wmts.nlsc.gov.tw/wmts",
+          layer: "EMAP",
+          style: "default",
+          format: "image/png",
+          tileMatrixSetID: "GoogleMapsCompatible",
+          tilingScheme: new Cesium.WebMercatorTilingScheme(),
+          maximumLevel: 19,
+          tileMatrixLabels: Array.from({ length: 20 }, (_, i) => `${i}`),
+          credit: "內政部國土測繪中心"
+        });
+
+
+        originalBaseLayer = viewer.imageryLayers.addImageryProvider(emapLayer);
+
+        // ✅ 載入 I3S 圖層（台中市建物）
+        i3sLayer = new Cesium.I3SDataProvider({
+          url: "https://i3s.nlsc.gov.tw/building/i3s/SceneServer/layers/1"
+        });
+        viewer.scene.primitives.add(i3sLayer);
+
+        // ✅ 按鈕文字改變
+        this.textContent = "還原 Cesium 底圖 + 移除 I3S";
+        isSwitched = true;
+
+      } else {
+        // ✅ 移除電子地圖 → 改回 Cesium 原本底圖
+      viewer.imageryLayers.remove(originalBaseLayer, false);
+
+      const defaultLayer = new Cesium.TileMapServiceImageryProvider({
+        url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+      });
+      originalBaseLayer = viewer.imageryLayers.addImageryProvider(defaultLayer);
+
+
+
+
+        // ✅ 移除 I3S 圖層
+        if (i3sLayer) {
+          viewer.scene.primitives.remove(i3sLayer);
+          i3sLayer = null;  
+        }
+
+        // ✅ 按鈕文字改回原本
+        this.textContent = "切換 I3S 圖層 + 電子地圖底圖";
+        isSwitched = false;
+      }
+    });
+  </script>
+</body>
+</html>
