@@ -92,12 +92,12 @@
     //   })
     // );
 
-    var tileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-        url: url, //数据路径
-        maximumScreenSpaceError: 2, //最大的屏幕空间误差
-        maximumNumberOfLoadedTiles: 1000, //最大加载瓦片个数
-        modelMatrix: m //形状矩阵
-    }));
+    // var tileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
+    //     url: url, //数据路径
+    //     maximumScreenSpaceError: 2, //最大的屏幕空间误差
+    //     maximumNumberOfLoadedTiles: 1000, //最大加载瓦片个数
+    //     modelMatrix: m //形状矩阵
+    // }));
 
     // // 全域變數
     // let clickHandler = null; // 避免重複註冊事件監聽器
@@ -238,62 +238,62 @@
     // }
 
 
-    // 圖層切換邏輯
-    let isSwitched = false;
-    let originalBaseLayer = viewer.imageryLayers.get(0); // 初始底圖
-    let i3sLayer = null;
+    // // 圖層切換邏輯
+    // let isSwitched = false;
+    // let originalBaseLayer = viewer.imageryLayers.get(0); // 初始底圖
+    // let i3sLayer = null;
 
-    document.getElementById("toggleLayerBtn").addEventListener("click", async function () {
-      if (!isSwitched) {
-        // 先移除原本底圖
-        viewer.imageryLayers.remove(originalBaseLayer, false);
+    // document.getElementById("toggleLayerBtn").addEventListener("click", async function () {
+    //   if (!isSwitched) {
+    //     // 先移除原本底圖
+    //     viewer.imageryLayers.remove(originalBaseLayer, false);
 
-        // 載入台灣 e-Map 電子地圖
-        const emapLayer = new Cesium.WebMapTileServiceImageryProvider({
-          url: "https://cors-anywhere.herokuapp.com/https://wmts.nlsc.gov.tw/wmts",
-          layer: "EMAP",
-          style: "default",
-          format: "image/png",
-          tileMatrixSetID: "GoogleMapsCompatible",
-          tilingScheme: new Cesium.WebMercatorTilingScheme(),
-          maximumLevel: 19,
-          tileMatrixLabels: Array.from({ length: 20 }, (_, i) => `${i}`),
-          credit: "內政部國土測繪中心"
-        });
+    //     // 載入台灣 e-Map 電子地圖
+    //     const emapLayer = new Cesium.WebMapTileServiceImageryProvider({
+    //       url: "https://cors-anywhere.herokuapp.com/https://wmts.nlsc.gov.tw/wmts",
+    //       layer: "EMAP",
+    //       style: "default",
+    //       format: "image/png",
+    //       tileMatrixSetID: "GoogleMapsCompatible",
+    //       tilingScheme: new Cesium.WebMercatorTilingScheme(),
+    //       maximumLevel: 19,
+    //       tileMatrixLabels: Array.from({ length: 20 }, (_, i) => `${i}`),
+    //       credit: "內政部國土測繪中心"
+    //     });
 
 
-        originalBaseLayer = viewer.imageryLayers.addImageryProvider(emapLayer);
+    //     originalBaseLayer = viewer.imageryLayers.addImageryProvider(emapLayer);
 
-        // ✅ 載入 I3S 圖層（台中市建物）
-        i3sLayer = new Cesium.I3SDataProvider({
-          url: "https://i3s.nlsc.gov.tw/building/i3s/SceneServer/layers/1"
-        });
-        viewer.scene.primitives.add(i3sLayer);
+    //     // ✅ 載入 I3S 圖層（台中市建物）
+    //     i3sLayer = new Cesium.I3SDataProvider({
+    //       url: "https://i3s.nlsc.gov.tw/building/i3s/SceneServer/layers/1"
+    //     });
+    //     viewer.scene.primitives.add(i3sLayer);
 
-        // ✅ 按鈕文字改變
-        this.textContent = "還原 Cesium 底圖 + 移除 I3S";
-        isSwitched = true;
+    //     // ✅ 按鈕文字改變
+    //     this.textContent = "還原 Cesium 底圖 + 移除 I3S";
+    //     isSwitched = true;
 
-      } else {
-        // ✅ 移除電子地圖 → 改回 Cesium 原本底圖
-      viewer.imageryLayers.remove(originalBaseLayer, false);
+    //   } else {
+    //     // ✅ 移除電子地圖 → 改回 Cesium 原本底圖
+    //   viewer.imageryLayers.remove(originalBaseLayer, false);
 
-      const defaultLayer = new Cesium.TileMapServiceImageryProvider({
-        url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
-      });
-      originalBaseLayer = viewer.imageryLayers.addImageryProvider(defaultLayer);
+    //   const defaultLayer = new Cesium.TileMapServiceImageryProvider({
+    //     url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+    //   });
+    //   originalBaseLayer = viewer.imageryLayers.addImageryProvider(defaultLayer);
 
-        // ✅ 移除 I3S 圖層
-        if (i3sLayer) {
-          viewer.scene.primitives.remove(i3sLayer);
-          i3sLayer = null;  
-        }
+    //     // ✅ 移除 I3S 圖層
+    //     if (i3sLayer) {
+    //       viewer.scene.primitives.remove(i3sLayer);
+    //       i3sLayer = null;  
+    //     }
 
-        // ✅ 按鈕文字改回原本
-        this.textContent = "切換 I3S 圖層 + 電子地圖底圖";
-        isSwitched = false;
-      }
-    });
+    //     // ✅ 按鈕文字改回原本
+    //     this.textContent = "切換 I3S 圖層 + 電子地圖底圖";
+    //     isSwitched = false;
+    //   }
+    // });
   </script>
 </body>
 </html>
