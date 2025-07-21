@@ -53,9 +53,17 @@
     );
 
     // 加入 3D Tiles 建築物模型
-    const buildingTileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-      url: "https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json"
-    }));
+    // const buildingTileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
+    //   url: "https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json"
+    // }));
+    try {
+      const tileset = await Cesium.Cesium3DTileset.fromUrl(
+        "http://localhost:8002/tilesets/Seattle/tileset.json"
+      );
+      scene.primitives.add(tileset);
+    } catch (error) {
+      console.error(`Error creating tileset: ${error}`);
+    }
 
     // 初始視角：台中市
     viewer.camera.setView({
