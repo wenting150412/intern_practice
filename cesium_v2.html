@@ -357,7 +357,7 @@
     // 添加WMTS圖層
     viewer.imageryLayers.addImageryProvider(
       new Cesium.UrlTemplateImageryProvider({
-        // 這邊是用內政部的通用電子地圖，可以去內政部國土測繪參考，如果你有放其他的底圖的話。
+        // 這邊是用內政部的通用電子地圖，可以去內政部國土測繪參考
         url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
         tilingScheme: new Cesium.WebMercatorTilingScheme(),
         maximumLevel: 18,
