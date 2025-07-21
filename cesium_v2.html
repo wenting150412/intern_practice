@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
@@ -294,6 +294,173 @@
     //     isSwitched = false;
     //   }
     // });
+  </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cesium 切換 I3S 與底圖 + 3D Tiles</title>
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
+  <style>
+    html, body, #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #toggleLayerBtn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #toggle3DTilesBtn {
+      position: absolute;
+      top: 50px;
+      left: 10px;
+      z-index: 100;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <button id="toggleLayerBtn">切換 I3S 圖層 + 電子地圖底圖</button>
+  <button id="toggle3DTilesBtn">切換 3D Tiles 建築物</button>
+
+  <script>
+    // 替換成你的 Cesium token
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
+
+    // 初始化 Cesium Viewer
+    var viewer = new Cesium.Viewer('cesiumContainer', {
+      terrain: Cesium.Terrain.fromWorldTerrain(),
+      animation: false,
+      baseLayerPicker: false,
+      timeline: false,
+    });
+
+    // 添加WMTS圖層
+    viewer.imageryLayers.addImageryProvider(
+      new Cesium.UrlTemplateImageryProvider({
+        // 這邊是用內政部的通用電子地圖，可以去內政部國土測繪參考，如果你有放其他的底圖的話。
+        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
+        tilingScheme: new Cesium.WebMercatorTilingScheme(),
+        maximumLevel: 18,
+      })
+    );
+
+    // 全域變數存儲 3D Tiles
+    let buildingTileset = null;
+    let is3DTilesVisible = false;
+
+    // 加載 3D Tiles 建築物模型（修正版本）
+    function load3DTiles() {
+      try {
+        buildingTileset = viewer.scene.primitives.add(
+          new Cesium.Cesium3DTileset({
+            url: "https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json"
+          })
+        );
+
+        // 當 tileset 準備就緒時執行
+        buildingTileset.readyPromise.then(function(tileset) {
+          console.log('3D Tiles 載入成功');
+          
+          // 可以設定一些樣式選項
+          tileset.style = new Cesium.Cesium3DTileStyle({
+            color: {
+              conditions: [
+                ["${Height} >= 20", "color('lightblue')"],
+                ["${Height} >= 10", "color('yellow')"],
+                ["true", "color('white')"]
+              ]
+            }
+          });
+
+          // 飛到建築物位置（台中市區）
+          viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(120.6839, 24.1871, 1000),
+            orientation: {
+              heading: Cesium.Math.toRadians(0),
+              pitch: Cesium.Math.toRadians(-45),
+              roll: 0
+            }
+          });
+        }).catch(function(error) {
+          console.error('3D Tiles 載入失敗:', error);
+        });
+
+        is3DTilesVisible = true;
+      } catch (error) {
+        console.error('建立 3D Tiles 時發生錯誤:', error);
+      }
+    }
+
+    // 切換 3D Tiles 顯示/隱藏
+    function toggle3DTiles() {
+      if (buildingTileset) {
+        buildingTileset.show = !buildingTileset.show;
+        is3DTilesVisible = buildingTileset.show;
+      } else {
+        load3DTiles();
+      }
+      
+      // 更新按鈕文字
+      const btn = document.getElementById('toggle3DTilesBtn');
+      btn.textContent = is3DTilesVisible ? '隱藏 3D Tiles 建築物' : '顯示 3D Tiles 建築物';
+    }
+
+    // 初始化時創建圖例
+    document.addEventListener('DOMContentLoaded', function() {
+        // 如果有 createLegend 函數的話
+        if (typeof createLegend === 'function') {
+            createLegend();
+        }
+        
+        // 綁定 3D Tiles 切換按鈕事件
+        document.getElementById('toggle3DTilesBtn').addEventListener('click', toggle3DTiles);
+        
+        // 自動載入 3D Tiles（可選）
+        // load3DTiles();
+    });
+
+    // 初始視角：台中市
+    viewer.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(120.6839, 24.1871, 55000),
+      orientation: {
+        heading: Cesium.Math.toRadians(0),
+        pitch: Cesium.Math.toRadians(-90),
+        roll: 0
+      }
+    });
+
+    // ✅ HomeButton 回台灣上空
+    viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function (e) {
+      e.cancel = true;
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(120.65, 24.15, 3000000),
+        orientation: {
+          heading: Cesium.Math.toRadians(0),
+          pitch: Cesium.Math.toRadians(-90),
+          roll: 0
+        }
+      });
+    });
   </script>
 </body>
 </html>
