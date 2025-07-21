@@ -208,92 +208,92 @@
     // }
 
     // 新增圖例顯示功能
-    function createLegend() {
-        let legend = document.createElement('div');
-        legend.id = 'legend';
-        legend.style.cssText = `
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(42, 42, 42, 0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            z-index: 1000;
-        `;
+    // function createLegend() {
+    //     let legend = document.createElement('div');
+    //     legend.id = 'legend';
+    //     legend.style.cssText = `
+    //         position: absolute;
+    //         top: 10px;
+    //         right: 10px;
+    //         background: rgba(42, 42, 42, 0.8);
+    //         color: white;
+    //         padding: 10px;
+    //         border-radius: 5px;
+    //         font-family: Arial, sans-serif;
+    //         font-size: 12px;
+    //         z-index: 1000;
+    //     `;
         
-        legend.innerHTML = `
-            <h4 style="margin: 0 0 10px 0;">福利機構圖例</h4>
-            <div><span style="color: blue;">●</span> 安養機構</div>
-            <div><span style="color: green;">●</span> 養護機構</div>
-            <div><span style="color: purple;">●</span> 安養/養護機構</div>
-            <div><span style="color: orange;">●</span> 長照機構</div>
-            <div><span style="color: yellow;">●</span> 日照機構</div>
-            <div><span style="color: red;">●</span> 失智機構</div>
-        `;
+    //     legend.innerHTML = `
+    //         <h4 style="margin: 0 0 10px 0;">福利機構圖例</h4>
+    //         <div><span style="color: blue;">●</span> 安養機構</div>
+    //         <div><span style="color: green;">●</span> 養護機構</div>
+    //         <div><span style="color: purple;">●</span> 安養/養護機構</div>
+    //         <div><span style="color: orange;">●</span> 長照機構</div>
+    //         <div><span style="color: yellow;">●</span> 日照機構</div>
+    //         <div><span style="color: red;">●</span> 失智機構</div>
+    //     `;
         
-        document.body.appendChild(legend);
-    }
+    //     document.body.appendChild(legend);
+    // }
 
 
-    // 圖層切換邏輯
-    let isSwitched = false;
-    let originalBaseLayer = viewer.imageryLayers.get(0); // 初始底圖
-    let i3sLayer = null;
+    // // 圖層切換邏輯
+    // let isSwitched = false;
+    // let originalBaseLayer = viewer.imageryLayers.get(0); // 初始底圖
+    // let i3sLayer = null;
 
-    document.getElementById("toggleLayerBtn").addEventListener("click", async function () {
-      if (!isSwitched) {
-        // 先移除原本底圖
-        viewer.imageryLayers.remove(originalBaseLayer, false);
+    // document.getElementById("toggleLayerBtn").addEventListener("click", async function () {
+    //   if (!isSwitched) {
+    //     // 先移除原本底圖
+    //     viewer.imageryLayers.remove(originalBaseLayer, false);
 
-        // 載入台灣 e-Map 電子地圖
-        const emapLayer = new Cesium.WebMapTileServiceImageryProvider({
-          url: "https://cors-anywhere.herokuapp.com/https://wmts.nlsc.gov.tw/wmts",
-          layer: "EMAP",
-          style: "default",
-          format: "image/png",
-          tileMatrixSetID: "GoogleMapsCompatible",
-          tilingScheme: new Cesium.WebMercatorTilingScheme(),
-          maximumLevel: 19,
-          tileMatrixLabels: Array.from({ length: 20 }, (_, i) => `${i}`),
-          credit: "內政部國土測繪中心"
-        });
+    //     // 載入台灣 e-Map 電子地圖
+    //     const emapLayer = new Cesium.WebMapTileServiceImageryProvider({
+    //       url: "https://cors-anywhere.herokuapp.com/https://wmts.nlsc.gov.tw/wmts",
+    //       layer: "EMAP",
+    //       style: "default",
+    //       format: "image/png",
+    //       tileMatrixSetID: "GoogleMapsCompatible",
+    //       tilingScheme: new Cesium.WebMercatorTilingScheme(),
+    //       maximumLevel: 19,
+    //       tileMatrixLabels: Array.from({ length: 20 }, (_, i) => `${i}`),
+    //       credit: "內政部國土測繪中心"
+    //     });
 
 
-        originalBaseLayer = viewer.imageryLayers.addImageryProvider(emapLayer);
+    //     originalBaseLayer = viewer.imageryLayers.addImageryProvider(emapLayer);
 
-        // ✅ 載入 I3S 圖層（台中市建物）
-        i3sLayer = new Cesium.I3SDataProvider({
-          url: "https://i3s.nlsc.gov.tw/building/i3s/SceneServer/layers/1"
-        });
-        viewer.scene.primitives.add(i3sLayer);
+    //     // ✅ 載入 I3S 圖層（台中市建物）
+    //     i3sLayer = new Cesium.I3SDataProvider({
+    //       url: "https://i3s.nlsc.gov.tw/building/i3s/SceneServer/layers/1"
+    //     });
+    //     viewer.scene.primitives.add(i3sLayer);
 
-        // ✅ 按鈕文字改變
-        this.textContent = "還原 Cesium 底圖 + 移除 I3S";
-        isSwitched = true;
+    //     // ✅ 按鈕文字改變
+    //     this.textContent = "還原 Cesium 底圖 + 移除 I3S";
+    //     isSwitched = true;
 
-      } else {
-        // ✅ 移除電子地圖 → 改回 Cesium 原本底圖
-      viewer.imageryLayers.remove(originalBaseLayer, false);
+    //   } else {
+    //     // ✅ 移除電子地圖 → 改回 Cesium 原本底圖
+    //   viewer.imageryLayers.remove(originalBaseLayer, false);
 
-      const defaultLayer = new Cesium.TileMapServiceImageryProvider({
-        url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
-      });
-      originalBaseLayer = viewer.imageryLayers.addImageryProvider(defaultLayer);
+    //   const defaultLayer = new Cesium.TileMapServiceImageryProvider({
+    //     url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+    //   });
+    //   originalBaseLayer = viewer.imageryLayers.addImageryProvider(defaultLayer);
 
-        // ✅ 移除 I3S 圖層
-        if (i3sLayer) {
-          viewer.scene.primitives.remove(i3sLayer);
-          i3sLayer = null;  
-        }
+    //     // ✅ 移除 I3S 圖層
+    //     if (i3sLayer) {
+    //       viewer.scene.primitives.remove(i3sLayer);
+    //       i3sLayer = null;  
+    //     }
 
-        // ✅ 按鈕文字改回原本
-        this.textContent = "切換 I3S 圖層 + 電子地圖底圖";
-        isSwitched = false;
-      }
-    });
+    //     // ✅ 按鈕文字改回原本
+    //     this.textContent = "切換 I3S 圖層 + 電子地圖底圖";
+    //     isSwitched = false;
+    //   }
+    // });
   </script>
 </body>
 </html>
