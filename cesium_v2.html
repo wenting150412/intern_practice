@@ -77,24 +77,24 @@
     emapWmtsLayer.show = true; // 預設先顯示WMTS圖層
 
     let esriImageryLayer = viewer.baseLayer; // 將預設的衛星圖層賦值給 esriImageryLayer
-    let showingBuildingTileset = true; // 初始狀態：顯示 3D Tiles 和衛星底圖
+    let showingBuildingTileset = true; // 初始狀態：顯示 3D Tiles 和電子地圖底圖
 
     const toggleButton = document.getElementById('toggleLayerBtn');
-    toggleButton.textContent = '切換為電子地圖底圖'; // 初始按鈕文字
+    toggleButton.textContent = '切換為衛星雲圖'; // 初始按鈕文字
 
     toggleButton.onclick = function() {
       if (showingBuildingTileset) {
         buildingTileset.show = false; // 隱藏 3D Tiles
-        esriImageryLayer.show = false; // 隱藏衛星底圖
-        emapWmtsLayer.show = true; // 顯示電子地圖底圖
+        esriImageryLayer.show = true; // 隱藏衛星底圖
+        emapWmtsLayer.show = false; // 顯示電子地圖底圖
 
-        this.textContent = '切換回 3D 建築模型 + 衛星影像底圖';
+        this.textContent = '切換回 3D 建築模型 + 電子地圖底圖';
       } else {
         buildingTileset.show = true; // 顯示 3D Tiles
-        esriImageryLayer.show = true; // 顯示衛星底圖
-        emapWmtsLayer.show = false; // 隱藏電子地圖底圖
+        esriImageryLayer.show = false; // 顯示衛星底圖
+        emapWmtsLayer.show = true; // 隱藏電子地圖底圖
 
-        this.textContent = '切換為電子地圖底圖';
+        this.textContent = '切換為衛星雲圖';
       }
       showingBuildingTileset = !showingBuildingTileset; // 切換狀態
     };
