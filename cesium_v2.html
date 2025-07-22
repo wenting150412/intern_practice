@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-UTF-8" />
+  <meta charset="UTF-8" />
   <title>Cesium 載入 3D Tiles</title>
   <script src="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Cesium.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
@@ -38,41 +38,33 @@
       animation: false,
       baseLayerPicker: false,
       timeline: false,
-      // 確保底圖是穩定的，以便你專注於 3D Tiles
       baseLayer: Cesium.ImageryLayer.fromProviderAsync(
         Cesium.ArcGisMapServerImageryProvider.fromUrl("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer")
       )
     });
 
-     // --- 解決 3D Tiles 精度和定位問題的關鍵 ---
     const taichungCenter = Cesium.Cartesian3.fromDegrees(120.6839, 24.1871, 0);
     const modelTransform = Cesium.Transforms.eastNorthUpToFixedFrame(taichungCenter);
 
-    // **關鍵修改點：先建立 Cesium3DTileset 實例，再將其添加到場景**
-    const newBuildingTileset = new Cesium.Cesium3DTileset({ // 用 newBuildingTileset 避免與舊的 buildingTileset 混淆
+    // **這是關鍵的修改：讓 buildingTileset 變數直接儲存 Cesium3DTileset 實例**
+    // 這樣 buildingTileset 本身就有了 .readyPromise 屬性
+    let buildingTileset = new Cesium.Cesium3DTileset({
         url: "https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json",
         modelMatrix: modelTransform,
         maximumScreenSpaceError: 16,
     });
 
-    let buildingTileset = viewer.scene.primitives.add(newBuildingTileset); // 將實例添加到場景中
+    // 然後將這個已經創建的實例添加到場景的 primitives 中
+    viewer.scene.primitives.add(buildingTileset);
 
-    // **現在，我們可以使用 newBuildingTileset 的 readyPromise**
-    newBuildingTileset.readyPromise.then(function(tileset) {
-      viewer.flyTo(tileset);
-      console.log('3D Tiles Model loaded successfully and camera flown to it!'); // 添加一個成功載入的訊息
-    }).catch(function(error) {
-      console.error(`Error loading tileset: ${error}`);
-    });
-
-    // **核心：當 3D Tiles 模型載入完成後，自動將視角飛到模型位置**
+    // **現在，我們只需要一次處理 buildingTileset.readyPromise**
     buildingTileset.readyPromise.then(function(tileset) {
       viewer.flyTo(tileset);
       console.log('3D Tiles Model loaded successfully and camera flown to it!');
     }).catch(function(error) {
       console.error(`Error loading tileset: ${error}`);
     });
-    // --- 結束 3D Tiles 解決方案 ---
+    // --- 3D Tiles 相關程式碼結束 ---
 
     // 添加內政部通用電子地圖 WMTS 圖層 (預設隱藏，等待切換)
     const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
@@ -92,16 +84,12 @@
 
     toggleButton.onclick = function() {
       if (showingBuildingTileset) {
-        // 現在顯示 3D Tiles 和衛星底圖
-        // 切換為：隱藏 3D Tiles，顯示電子地圖底圖
         buildingTileset.show = false; // 隱藏 3D Tiles
         esriImageryLayer.show = false; // 隱藏衛星底圖
         emapWmtsLayer.show = true; // 顯示電子地圖底圖
 
         this.textContent = '切換回 3D 建築模型 + 衛星影像底圖';
       } else {
-        // 現在顯示電子地圖底圖
-        // 切換為：顯示 3D Tiles，顯示衛星底圖
         buildingTileset.show = true; // 顯示 3D Tiles
         esriImageryLayer.show = true; // 顯示衛星底圖
         emapWmtsLayer.show = false; // 隱藏電子地圖底圖
@@ -111,7 +99,6 @@
       showingBuildingTileset = !showingBuildingTileset; // 切換狀態
     };
 
-    // HomeButton 回台灣上空
     viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function(e) {
       e.cancel = true;
       viewer.camera.flyTo({
