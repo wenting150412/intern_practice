@@ -44,19 +44,26 @@
       )
     });
 
-    // --- 解決 3D Tiles 精度和定位問題的關鍵 ---
-    // 1. 定義一個局部原點 (台中市中心附近，這是模型所在的區域)
-    const taichungCenter = Cesium.Cartesian3.fromDegrees(120.6839, 24.1871, 0); // 經度, 緯度, 高度 (高度可以設為 0 或模型大致底部高度)
-
-    // 2. 建立一個轉換矩陣，將模型數據相對於這個局部原點進行高精度渲染
+     // --- 解決 3D Tiles 精度和定位問題的關鍵 ---
+    const taichungCenter = Cesium.Cartesian3.fromDegrees(120.6839, 24.1871, 0);
     const modelTransform = Cesium.Transforms.eastNorthUpToFixedFrame(taichungCenter);
 
-    // 加入 3D Tiles 建築物模型
-    let buildingTileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-      url: "https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json",
-      modelMatrix: modelTransform, // **核心：解決精度和可能的位置偏移問題**
-      maximumScreenSpaceError: 16, // 控制模型細節度，預設值
-    }));
+    // **關鍵修改點：先建立 Cesium3DTileset 實例，再將其添加到場景**
+    const newBuildingTileset = new Cesium.Cesium3DTileset({ // 用 newBuildingTileset 避免與舊的 buildingTileset 混淆
+        url: "https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json",
+        modelMatrix: modelTransform,
+        maximumScreenSpaceError: 16,
+    });
+
+    let buildingTileset = viewer.scene.primitives.add(newBuildingTileset); // 將實例添加到場景中
+
+    // **現在，我們可以使用 newBuildingTileset 的 readyPromise**
+    newBuildingTileset.readyPromise.then(function(tileset) {
+      viewer.flyTo(tileset);
+      console.log('3D Tiles Model loaded successfully and camera flown to it!'); // 添加一個成功載入的訊息
+    }).catch(function(error) {
+      console.error(`Error loading tileset: ${error}`);
+    });
 
     // **核心：當 3D Tiles 模型載入完成後，自動將視角飛到模型位置**
     buildingTileset.readyPromise.then(function(tileset) {
