@@ -68,8 +68,9 @@
     // **核心：當 3D Tiles 模型載入完成後，自動將視角飛到模型位置**
     buildingTileset.readyPromise.then(function(tileset) {
       viewer.flyTo(tileset);
+      console.log('3D Tiles Model loaded successfully and camera flown to it!');
     }).catch(function(error) {
-      console.error(`Error loading tileset: ${error}`); // 確保捕獲載入錯誤
+      console.error(`Error loading tileset: ${error}`);
     });
     // --- 結束 3D Tiles 解決方案 ---
 
