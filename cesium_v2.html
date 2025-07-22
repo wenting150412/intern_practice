@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <title>Cesium 切換 I3S 與底圖</title>
-  <script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
-  <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
+  <meta charset="UTF-UTF-8" />
+  <title>Cesium 載入 3D Tiles</title>
+  <script src="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Cesium.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
   <style>
     html, body, #cesiumContainer {
       width: 100%;
@@ -28,10 +28,9 @@
 </head>
 <body>
   <div id="cesiumContainer"></div>
-  <button id="toggleLayerBtn">切換 I3S 圖層 + 電子地圖底圖</button>
+  <button id="toggleLayerBtn">切換 3D 建築模型 + 衛星影像底圖</button>
 
   <script>
-    // 你所有的 Cesium 相關的 JavaScript 程式碼，包括初始化 viewer 和按鈕邏輯，都放在這裡
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
 
     var viewer = new Cesium.Viewer('cesiumContainer', {
@@ -39,8 +38,35 @@
       animation: false,
       baseLayerPicker: false,
       timeline: false,
+      // 確保底圖是穩定的，以便你專注於 3D Tiles
+      baseLayer: Cesium.ImageryLayer.fromProviderAsync(
+        Cesium.ArcGisMapServerImageryProvider.fromUrl("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer")
+      )
     });
 
+    // --- 解決 3D Tiles 精度和定位問題的關鍵 ---
+    // 1. 定義一個局部原點 (台中市中心附近，這是模型所在的區域)
+    const taichungCenter = Cesium.Cartesian3.fromDegrees(120.6839, 24.1871, 0); // 經度, 緯度, 高度 (高度可以設為 0 或模型大致底部高度)
+
+    // 2. 建立一個轉換矩陣，將模型數據相對於這個局部原點進行高精度渲染
+    const modelTransform = Cesium.Transforms.eastNorthUpToFixedFrame(taichungCenter);
+
+    // 加入 3D Tiles 建築物模型
+    let buildingTileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
+      url: "https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json",
+      modelMatrix: modelTransform, // **核心：解決精度和可能的位置偏移問題**
+      maximumScreenSpaceError: 16, // 控制模型細節度，預設值
+    }));
+
+    // **核心：當 3D Tiles 模型載入完成後，自動將視角飛到模型位置**
+    buildingTileset.readyPromise.then(function(tileset) {
+      viewer.flyTo(tileset);
+    }).catch(function(error) {
+      console.error(`Error loading tileset: ${error}`); // 確保捕獲載入錯誤
+    });
+    // --- 結束 3D Tiles 解決方案 ---
+
+    // 添加內政部通用電子地圖 WMTS 圖層 (預設隱藏，等待切換)
     const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
       new Cesium.UrlTemplateImageryProvider({
         url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
@@ -48,56 +74,36 @@
         maximumLevel: 18,
       })
     );
+    emapWmtsLayer.show = false; // 預設先隱藏，讓衛星圖顯示
 
-    let buildingTileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-      url: "https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json"
-    }));
+    let esriImageryLayer = viewer.baseLayer; // 將預設的衛星圖層賦值給 esriImageryLayer
+    let showingBuildingTileset = true; // 初始狀態：顯示 3D Tiles 和衛星底圖
 
-    const esriWorldImageryProvider = new Cesium.ArcGisMapServerImageryProvider({
-        url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
-    });
-    let esriImageryLayer = null;
-
-    let showingBuildingTileset = true;
-
-    // 現在這個按鈕元素一定已經被載入了，所以不會是 null
     const toggleButton = document.getElementById('toggleLayerBtn');
-    toggleButton.textContent = '切換為衛星影像底圖';
+    toggleButton.textContent = '切換為電子地圖底圖'; // 初始按鈕文字
 
     toggleButton.onclick = function() {
       if (showingBuildingTileset) {
-        buildingTileset.show = false;
-        emapWmtsLayer.show = false;
+        // 現在顯示 3D Tiles 和衛星底圖
+        // 切換為：隱藏 3D Tiles，顯示電子地圖底圖
+        buildingTileset.show = false; // 隱藏 3D Tiles
+        esriImageryLayer.show = false; // 隱藏衛星底圖
+        emapWmtsLayer.show = true; // 顯示電子地圖底圖
 
-        if (!esriImageryLayer) {
-          esriImageryLayer = viewer.imageryLayers.addImageryProvider(esriWorldImageryProvider);
-        } else {
-          esriImageryLayer.show = true;
-        }
-
-        this.textContent = '切換回 3D 建築模型 + 電子地圖底圖';
+        this.textContent = '切換回 3D 建築模型 + 衛星影像底圖';
       } else {
-        buildingTileset.show = true;
-        emapWmtsLayer.show = true;
+        // 現在顯示電子地圖底圖
+        // 切換為：顯示 3D Tiles，顯示衛星底圖
+        buildingTileset.show = true; // 顯示 3D Tiles
+        esriImageryLayer.show = true; // 顯示衛星底圖
+        emapWmtsLayer.show = false; // 隱藏電子地圖底圖
 
-        if (esriImageryLayer) {
-          esriImageryLayer.show = false;
-        }
-
-        this.textContent = '切換為衛星影像底圖';
+        this.textContent = '切換為電子地圖底圖';
       }
-      showingBuildingTileset = !showingBuildingTileset;
+      showingBuildingTileset = !showingBuildingTileset; // 切換狀態
     };
 
-    viewer.camera.setView({
-      destination: Cesium.Cartesian3.fromDegrees(120.6839, 24.1871, 55000),
-      orientation: {
-        heading: Cesium.Math.toRadians(0),
-        pitch: Cesium.Math.toRadians(-90),
-        roll: 0
-      }
-    });
-
+    // HomeButton 回台灣上空
     viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function(e) {
       e.cancel = true;
       viewer.camera.flyTo({
