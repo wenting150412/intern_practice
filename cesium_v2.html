@@ -58,12 +58,12 @@
     viewer.scene.primitives.add(buildingTileset);
 
     // **現在，我們只需要一次處理 buildingTileset.readyPromise**
-    buildingTileset.readyPromise.then(function(tileset) {
-      viewer.flyTo(tileset);
-      console.log('3D Tiles Model loaded successfully and camera flown to it!');
-    }).catch(function(error) {
-      console.error(`Error loading tileset: ${error}`);
-    });
+    // buildingTileset.readyPromise.then(function(tileset) {
+    //   viewer.flyTo(tileset);
+    //   console.log('3D Tiles Model loaded successfully and camera flown to it!');
+    // }).catch(function(error) {
+    //   console.error(`Error loading tileset: ${error}`);
+    // });
     // --- 3D Tiles 相關程式碼結束 ---
 
     // 添加內政部通用電子地圖 WMTS 圖層 (預設隱藏，等待切換)
