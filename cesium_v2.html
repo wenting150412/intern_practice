@@ -5,100 +5,110 @@
   <title>Cesium 切換 I3S 與底圖</title>
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
+  <style>
+    html, body, #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #toggleLayerBtn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <button id="toggleLayerBtn">切換 I3S 圖層 + 電子地圖底圖</button>
+
   <script>
-  // 替換成你的 Cesium token
-  Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
+    // 你所有的 Cesium 相關的 JavaScript 程式碼，包括初始化 viewer 和按鈕邏輯，都放在這裡
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
 
-  // 初始化 Cesium Viewer
-  var viewer = new Cesium.Viewer('cesiumContainer', {
-    terrain: Cesium.Terrain.fromWorldTerrain(),
-    animation: false,
-    baseLayerPicker: false, // Keep baseLayerPicker off as we're managing layers manually
-    timeline: false,
-  });
+    var viewer = new Cesium.Viewer('cesiumContainer', {
+      terrain: Cesium.Terrain.fromWorldTerrain(),
+      animation: false,
+      baseLayerPicker: false,
+      timeline: false,
+    });
 
-  // 添加內政部通用電子地圖 WMTS 圖層
-  const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
-    new Cesium.UrlTemplateImageryProvider({
-      url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
-      tilingScheme: new Cesium.WebMercatorTilingScheme(),
-      maximumLevel: 18,
-    })
-  );
+    const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
+      new Cesium.UrlTemplateImageryProvider({
+        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
+        tilingScheme: new Cesium.WebMercatorTilingScheme(),
+        maximumLevel: 18,
+      })
+    );
 
-  // 加入 3D Tiles 建築物模型
-  // Using `let` so we can access/modify it later
-  let buildingTileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-    url: "https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json"
-  }));
+    let buildingTileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
+      url: "https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json"
+    }));
 
-  // Define an alternative base map (e.g., Esri World Imagery)
-  // We'll add and remove this dynamically
-  const esriWorldImageryProvider = new Cesium.ArcGisMapServerImageryProvider({
-      url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
-  });
-  let esriImageryLayer = null; // Will store the layer when it's added
+    const esriWorldImageryProvider = new Cesium.ArcGisMapServerImageryProvider({
+        url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
+    });
+    let esriImageryLayer = null;
 
-  // Initial state: 3D Tiles and EMAP WMTS visible
-  let showingBuildingTileset = true;
+    let showingBuildingTileset = true;
 
-  // Get the button element
-  const toggleButton = document.getElementById('toggleLayerBtn');
-  toggleButton.textContent = '切換為衛星影像底圖'; // Initial button text
+    // 現在這個按鈕元素一定已經被載入了，所以不會是 null
+    const toggleButton = document.getElementById('toggleLayerBtn');
+    toggleButton.textContent = '切換為衛星影像底圖';
 
-  toggleButton.onclick = function() {
-    if (showingBuildingTileset) {
-      // Currently showing 3D Tiles + EMAP WMTS
-      // Switch to hide 3D Tiles and show satellite imagery
-      buildingTileset.show = false; // Hide 3D Tiles
-      emapWmtsLayer.show = false; // Hide EMAP WMTS
+    toggleButton.onclick = function() {
+      if (showingBuildingTileset) {
+        buildingTileset.show = false;
+        emapWmtsLayer.show = false;
 
-      // Add Esri World Imagery Layer if it's not already added
-      if (!esriImageryLayer) {
-        esriImageryLayer = viewer.imageryLayers.addImageryProvider(esriWorldImageryProvider);
+        if (!esriImageryLayer) {
+          esriImageryLayer = viewer.imageryLayers.addImageryProvider(esriWorldImageryProvider);
+        } else {
+          esriImageryLayer.show = true;
+        }
+
+        this.textContent = '切換回 3D 建築模型 + 電子地圖底圖';
       } else {
-        esriImageryLayer.show = true;
+        buildingTileset.show = true;
+        emapWmtsLayer.show = true;
+
+        if (esriImageryLayer) {
+          esriImageryLayer.show = false;
+        }
+
+        this.textContent = '切換為衛星影像底圖';
       }
+      showingBuildingTileset = !showingBuildingTileset;
+    };
 
-      this.textContent = '切換回 3D 建築模型 + 電子地圖底圖';
-    } else {
-      // Currently showing satellite imagery
-      // Switch back to show 3D Tiles + EMAP WMTS
-      buildingTileset.show = true; // Show 3D Tiles
-      emapWmtsLayer.show = true; // Show EMAP WMTS
-
-      // Hide Esri World Imagery Layer
-      if (esriImageryLayer) {
-        esriImageryLayer.show = false;
-      }
-
-      this.textContent = '切換為衛星影像底圖';
-    }
-    showingBuildingTileset = !showingBuildingTileset; // Toggle the state
-  };
-
-  // 初始視角：台中市
-  viewer.camera.setView({
-    destination: Cesium.Cartesian3.fromDegrees(120.6839, 24.1871, 55000),
-    orientation: {
-      heading: Cesium.Math.toRadians(0),
-      pitch: Cesium.Math.toRadians(-90),
-      roll: 0
-    }
-  });
-
-  // ✅ HomeButton 回台灣上空
-  viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function(e) {
-    e.cancel = true;
-    viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 3000000), // More central Taiwan coordinates
+    viewer.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(120.6839, 24.1871, 55000),
       orientation: {
         heading: Cesium.Math.toRadians(0),
         pitch: Cesium.Math.toRadians(-90),
         roll: 0
       }
     });
-  });
-</script>
+
+    viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function(e) {
+      e.cancel = true;
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 3000000),
+        orientation: {
+          heading: Cesium.Math.toRadians(0),
+          pitch: Cesium.Math.toRadians(-90),
+          roll: 0
+        }
+      });
+    });
+  </script>
 </body>
 </html>
