@@ -33,6 +33,7 @@
   <script>
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
 
+    // 初始化 Cesium Viewer
     var viewer = new Cesium.Viewer('cesiumContainer', {
       terrain: Cesium.Terrain.fromWorldTerrain(),
       animation: false,
@@ -46,28 +47,9 @@
     const taichungCenter = Cesium.Cartesian3.fromDegrees(120.6839, 24.1871, 0);
     const modelTransform = Cesium.Transforms.eastNorthUpToFixedFrame(taichungCenter);
 
-    // // **這是關鍵的修改：讓 buildingTileset 變數直接儲存 Cesium3DTileset 實例**
-    // // 這樣 buildingTileset 本身就有了 .readyPromise 屬性
-    // let buildingTileset = new Cesium.Cesium3DTileset({
-    //     url: "https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json",
-    //     modelMatrix: modelTransform,
-    //     maximumScreenSpaceError: 16,
-    // });
-
-    // // 然後將這個已經創建的實例添加到場景的 primitives 中
-    // viewer.scene.primitives.add(buildingTileset);
-
-    // // **現在，我們只需要一次處理 buildingTileset.readyPromise**
-    // buildingTileset.readyPromise.then(function(tileset) {
-    //   viewer.flyTo(tileset);
-    //   console.log('3D Tiles Model loaded successfully and camera flown to it!');
-    // }).catch(function(error) {
-    //   console.error(`Error loading tileset: ${error}`);
-    // });
-    // // --- 3D Tiles 相關程式碼結束 ---
-
     let buildingTileset;
 
+    // 初始化 3d tiles
     Cesium.Cesium3DTileset.fromUrl(
       "https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json", {
         modelMatrix: modelTransform,
@@ -88,7 +70,7 @@
     // viewer.flyTo(buildingTileset);
     console.log("3D Tiles Model loaded successfully!");
     
-    // ✅ 在 tileset 載入成功後，才綁定按鈕點擊事件
+    // 在 tileset 載入成功後，才綁定按鈕點擊事件
     toggleButton.onclick = function () {
       if (showingBuildingTileset) {
         buildingTileset.show = false;
@@ -123,23 +105,6 @@
 
     const toggleButton = document.getElementById('toggleLayerBtn');
     toggleButton.textContent = '切換為衛星雲圖'; // 初始按鈕文字
-
-    // toggleButton.onclick = function() {
-    //   if (showingBuildingTileset) {
-    //     buildingTileset.show = false; // 隱藏 3D Tiles
-    //     esriImageryLayer.show = true; // 隱藏衛星底圖
-    //     emapWmtsLayer.show = false; // 顯示電子地圖底圖
-
-    //     this.textContent = '切換回 3D 建築模型 + 電子地圖底圖';
-    //   } else {
-    //     buildingTileset.show = true; // 顯示 3D Tiles
-    //     esriImageryLayer.show = false; // 顯示衛星底圖
-    //     emapWmtsLayer.show = true; // 隱藏電子地圖底圖
-
-    //     this.textContent = '切換為衛星雲圖';
-    //   }
-    //   showingBuildingTileset = !showingBuildingTileset; // 切換狀態
-    // };
 
     // 初始視角：台中市
     viewer.camera.setView({
