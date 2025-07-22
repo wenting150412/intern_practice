@@ -42,6 +42,15 @@
       timeline: false,
     });
 
+    // 添加內政部通用電子地圖 WMTS 圖層 (預設隱藏，等待切換)
+    const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
+      new Cesium.UrlTemplateImageryProvider({
+        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
+        tilingScheme: new Cesium.WebMercatorTilingScheme(),
+        maximumLevel: 18,
+      })
+    );
+
     // ✅ 初始視角：台中市
     viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(120.6839, 24.1371, 1500),
