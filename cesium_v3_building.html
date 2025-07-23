@@ -38,7 +38,7 @@
 <body>
   <div id="cesiumContainer"></div>
 
-  <button id="toggleLayerBtn">切換為衛星雲圖</button>
+  <!-- <button id="toggleLayerBtn">切換為衛星雲圖</button> -->
 
   <div id="selector">
     <label for="citySelect">選擇縣市：</label>
@@ -123,8 +123,8 @@
       }
     });
 
-    // 衛星圖層
-    const esriImageryLayer = viewer.baseLayer;
+    // // 衛星圖層
+    // const esriImageryLayer = viewer.baseLayer;
 
     // 電子地圖圖層 (內政部 WMTS)
     const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
@@ -138,14 +138,14 @@
 
     let showingBuilding = true;
 
-    // 切換按鈕事件
-    toggleButton.onclick = () => {
-      loadedTilesets.forEach(ts => ts.show = !showingBuilding);
-      esriImageryLayer.show = showingBuilding ? true : false;
-      emapWmtsLayer.show = showingBuilding ? false : true;
-      toggleButton.textContent = showingBuilding ? '切換回 3D 建築模型 + 電子地圖底圖' : '切換為衛星雲圖';
-      showingBuilding = !showingBuilding;
-    };
+    // // 切換按鈕事件
+    // toggleButton.onclick = () => {
+    //   loadedTilesets.forEach(ts => ts.show = !showingBuilding);
+    //   esriImageryLayer.show = showingBuilding ? true : false;
+    //   emapWmtsLayer.show = showingBuilding ? false : true;
+    //   toggleButton.textContent = showingBuilding ? '切換回 3D 建築模型 + 電子地圖底圖' : '切換為衛星雲圖';
+    //   showingBuilding = !showingBuilding;
+    // };
 
     // 初始相機位置：台灣
     viewer.camera.setView({
