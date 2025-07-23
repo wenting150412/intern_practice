@@ -69,8 +69,6 @@
     // 載入 Tilesets
     cityTilesets.forEach(city => {
       Cesium.Cesium3DTileset.fromUrl(city.url).then(tileset => {
-        const modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(city.position);
-        tileset.modelMatrix = modelMatrix;
         viewer.scene.primitives.add(tileset);
         loadedTilesets.push(tileset);
         console.log(`${city.name} 3D Tiles 載入完成`);
