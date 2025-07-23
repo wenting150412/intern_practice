@@ -35,11 +35,13 @@
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
 
     // 先非同步載入 ArcGIS 影像圖層
-    Cesium.ImageryLayer.fromProviderAsync(
-      Cesium.ArcGisMapServerImageryProvider.fromUrl("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer")
-    ).then(function(baseLayer) {
+    Cesium.ArcGisMapServerImageryProvider
+      .fromUrl("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer")
+      .then(function (arcgisProvider) {
 
       // ✅ 正確初始化 Viewer，使用載入完成的 baseLayer
+      const baseLayer = new Cesium.ImageryLayer(arcgisProvider);
+
       const viewer = new Cesium.Viewer('cesiumContainer', {
         terrain: new Cesium.EllipsoidTerrainProvider(),
         animation: false,
