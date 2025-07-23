@@ -46,17 +46,17 @@
       <option value="">-- 請選擇 --</option>
       <option value="keelung">基隆市</option>
       <option value="taipei">台北市</option>
-      <option value="newtaipei">新北市</option>
+      <option value="new_taipei">新北市</option>
       <option value="taoyuan">桃園市</option>
-      <option value="hsinchu">新竹市</option>
-      <option value="hsinchucounty">新竹縣</option>
+      <option value="hsinchu_city">新竹市</option>
+      <option value="hsinchu_county">新竹縣</option>
       <option value="miaoli">苗栗縣</option>
       <option value="taichung">台中市</option>
       <option value="changhua">彰化縣</option>
       <option value="nantou">南投縣</option>
       <option value="yunlin">雲林縣</option>
-      <option value="chiayi">嘉義市</option>
-      <option value="chiayicounty">嘉義縣</option>
+      <option value="chiayi_city">嘉義市</option>
+      <option value="chiayi_county">嘉義縣</option>
       <option value="tainan">台南市</option>
       <option value="kaohsiung">高雄市</option>
       <option value="pingtung">屏東縣</option>
@@ -252,12 +252,13 @@
           viewer.camera.flyTo({
             destination: center,
             orientation: {
-              heading: Cesium.Math.toRadians(0),   // 面向北
-              pitch: Cesium.Math.toRadians(-90),   // 從正上往下
-              roll: 0
-            }
-          });
+            heading: Cesium.Math.toRadians(0),       // 面向正北
+            pitch: Cesium.Math.toRadians(-90),       // 垂直朝下看
+            roll: 0
+          },
+          duration: 2.5
         });
+      });
       } catch (error) {
         alert("載入失敗：" + error.message);
         console.error(error);
