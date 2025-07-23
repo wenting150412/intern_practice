@@ -92,134 +92,112 @@
     taipei: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/0/tileset.json',
       lon: 121.5654,
-      lat: 25.0330,
-      height: 50
+      lat: 25.0330
     },
     taichung: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json',
       lon: 120.6839,
-      lat: 24.1371,
-      height: 50
+      lat: 24.1371
     },
     keelung: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/2/tileset.json',
       lon: 121.7445,
-      lat: 25.1276,
-      height: 50
+      lat: 25.1276
     },
     tainan: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/3/tileset.json',
       lon: 120.2270,
-      lat: 22.9999,
-      height: 50
+      lat: 22.9999
     },
     kaohsiung: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/4/tileset.json',
       lon: 120.6660,
-      lat: 22.6273,
-      height: 50
+      lat: 22.6273
     },
     new_taipei: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/5/tileset.json',
       lon: 121.6739,
-      lat: 24.9157,
-      height: 50
+      lat: 24.9157
     },
     yilan: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/6/tileset.json',
       lon: 121.7195,
-      lat: 24.7021,
-      height: 50
+      lat: 24.7021
     },
     taoyuan: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/7/tileset.json',
       lon: 121.2168,
-      lat: 24.9372,
-      height: 50
+      lat: 24.9372
     },
     chiayi_city: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/8/tileset.json',
       lon: 120.4473,
-      lat: 23.4755,
-      height: 50
+      lat: 23.4755
     },
     hsinchu_county: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/9/tileset.json',
       lon: 121.0182,
-      lat: 24.8387,
-      height: 50
+      lat: 24.8387
     },
     miaoli: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/10/tileset.json',
       lon: 120.9417,
-      lat: 24.4892,
-      height: 50
+      lat: 24.4892
     },
     nantou: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/11/tileset.json',
       lon: 120.9876,
-      lat: 23.8388,
-      height: 50
+      lat: 23.8388
     },
     changhua: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/12/tileset.json',
       lon: 120.4818,
-      lat: 24.0518,
-      height: 50
+      lat: 24.0518
     },
     hsinchu_city: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/13/tileset.json',
       lon: 120.9686,
-      lat: 24.8039,
-      height: 50
+      lat: 24.8039
     },
     yunlin: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/14/tileset.json',
       lon: 120.3897,
-      lat: 23.7559,
-      height: 50
+      lat: 23.7559
     },
     chiayi_county: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/15/tileset.json',
       lon: 120.2550,
-      lat: 23.4518,
-      height: 50
+      lat: 23.4518
     },
     pingtung: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/16/tileset.json',
       lon: 120.5487,
-      lat: 22.5519,
-      height: 50
+      lat: 22.5519
     },
     hualien: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/17/tileset.json',
       lon: 121.3542,
-      lat: 23.7569,
-      height: 50
+      lat: 23.7569
     },
     taitung: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/18/tileset.json',
       lon: 121.1132,
-      lat: 22.7610,
-      height: 50
+      lat: 22.7610
     },
     kinmen: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/19/tileset.json',
       lon: 118.3171,
-      lat: 24.4321,
-      height: 50
+      lat: 24.4321
     },
     penghu: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/20/tileset.json',
       lon: 119.6151,
-      lat: 23.5655,
-      height: 50
+      lat: 23.5655
     },
     lienchiang: {
       url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/21/tileset.json',
       lon: 119.9510,
-      lat: 26.1608,
-      height: 50
+      lat: 26.1608
     }
   };
 
@@ -250,10 +228,10 @@
         viewer.scene.primitives.add(tileset);
         loadedTilesets.push(tileset);
 
-        const position = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height-50);
+        const position = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height);
 
         viewer.zoomTo(tileset).then(() => {
-          const center = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height -50); // 高一點點
+          const center = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height + 1500); // 高一點點
           viewer.camera.flyTo({
             destination: center,
             orientation: {
