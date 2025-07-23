@@ -250,10 +250,10 @@
         viewer.scene.primitives.add(tileset);
         loadedTilesets.push(tileset);
 
-        const position = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height);
+        const position = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height-50);
 
         viewer.zoomTo(tileset).then(() => {
-          const center = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height + 50+00); // 高一點點
+          const center = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height -50); // 高一點點
           viewer.camera.flyTo({
             destination: center,
             orientation: {
