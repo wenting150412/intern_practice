@@ -75,30 +75,17 @@
   <script>
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
 
-    // const viewer = new Cesium.Viewer('cesiumContainer', {
-    //   terrain: Cesium.Terrain.fromWorldTerrain(),
-    //   animation: false,
-    //   baseLayerPicker: false,
-    //   timeline: false,
-    //   baseLayer: Cesium.ImageryLayer.fromProviderAsync(
-    //     Cesium.ArcGisMapServerImageryProvider.fromUrl("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer")
-    //   )
-    // });
-
-    const toggleButton = document.getElementById('toggleLayerBtn');
-
-    // 電子地圖圖層 (內政部 WMTS)
     const viewer = new Cesium.Viewer('cesiumContainer', {
-      terrain: Cesium.Terrain.fromWorldTerrain(),
+    //   terrain: Cesium.Terrain.fromWorldTerrain(),
       animation: false,
       baseLayerPicker: false,
       timeline: false,
-      imageryProvider: new Cesium.UrlTemplateImageryProvider({
-        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
-        tilingScheme: new Cesium.WebMercatorTilingScheme(),
-        maximumLevel: 18
-      })
+      baseLayer: Cesium.ImageryLayer.fromProviderAsync(
+        Cesium.ArcGisMapServerImageryProvider.fromUrl("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer")
+      )
     });
+
+    const toggleButton = document.getElementById('toggleLayerBtn');
 
     // 縣市對應的 3D Tiles 路徑與定位資訊（依實際需求調整）
     const tilesetConfigs = {
@@ -265,16 +252,18 @@
 
         const position = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height);
 
-        const center = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height + 5000); // 高一點點
-        viewer.camera.flyTo({
+        viewer.zoomTo(tileset).then(() => {
+          const center = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height + 50+00); // 高一點點
+          viewer.camera.flyTo({
             destination: center,
             orientation: {
             heading: Cesium.Math.toRadians(0),       // 面向正北
             pitch: Cesium.Math.toRadians(-90),       // 垂直朝下看
             roll: 0
-            },
-            duration: 2.5
+          },
+          duration: 2.5
         });
+      });
       } catch (error) {
         alert("載入失敗：" + error.message);
         console.error(error);
@@ -284,8 +273,15 @@
     // // 衛星圖層
     // const esriImageryLayer = viewer.baseLayer;
 
-    
-    // emapWmtsLayer.show = true;
+    // 電子地圖圖層 (內政部 WMTS)
+    const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
+      new Cesium.UrlTemplateImageryProvider({
+        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
+        tilingScheme: new Cesium.WebMercatorTilingScheme(),
+        maximumLevel: 18
+      })
+    );
+    emapWmtsLayer.show = true;
 
     let showingBuilding = true;
 
