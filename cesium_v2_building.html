@@ -59,13 +59,15 @@
     buildingTileset = tileset;
     viewer.scene.primitives.add(buildingTileset);
 
-    const boundingSphere = tileset.boundingSphere;
-    const cartographic = Cesium.Cartographic.fromCartesian(boundingSphere.center);
-    const surface = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 0.0);
-    const offset = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 20); // 向上 20 公尺
-    const translation = Cesium.Cartesian3.subtract(offset, surface, new Cesium.Cartesian3());
-    tileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
-    viewer.zoomTo(tileset);
+    // const boundingSphere = tileset.boundingSphere;
+    // const cartographic = Cesium.Cartographic.fromCartesian(boundingSphere.center);
+    // const surface = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 0.0);
+    // const offset = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 20); // 向上 20 公尺
+    // const translation = Cesium.Cartesian3.subtract(offset, surface, new Cesium.Cartesian3());
+    // tileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
+    // viewer.zoomTo(tileset);
+
+    const correctedPosition = Cesium.Cartesian3.fromDegrees(120.6839, 24.1371, 50);
 
     // viewer.flyTo(buildingTileset);
     console.log("3D Tiles Model loaded successfully!");
