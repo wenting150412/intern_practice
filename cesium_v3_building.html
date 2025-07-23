@@ -117,7 +117,7 @@
         const position = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height);
 
         viewer.zoomTo(tileset).then(() => {
-          const center = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height + 300); // 高一點點
+          const center = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height + 300000); // 高一點點
           viewer.camera.flyTo({
             destination: center,
             orientation: {
