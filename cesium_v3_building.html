@@ -115,8 +115,6 @@
         loadedTilesets.push(tileset);
 
         const position = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height);
-        const modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(position);
-        tileset.modelMatrix = modelMatrix;
 
         viewer.zoomTo(tileset);
       } catch (error) {
