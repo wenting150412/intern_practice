@@ -116,7 +116,17 @@
 
         const position = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height);
 
-        viewer.zoomTo(tileset);
+        viewer.zoomTo(tileset).then(() => {
+          const center = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height + 300); // 高一點點
+          viewer.camera.flyTo({
+            destination: center,
+            orientation: {
+              heading: Cesium.Math.toRadians(0),   // 面向北
+              pitch: Cesium.Math.toRadians(-90),   // 從正上往下
+              roll: 0
+            }
+          });
+        });
       } catch (error) {
         alert("載入失敗：" + error.message);
         console.error(error);
