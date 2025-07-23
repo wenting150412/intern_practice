@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>Cesium 載入多縣市 3D Tiles</title>
+  <title>Cesium 多縣市 3D Tiles 選擇</title>
   <script src="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Cesium.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
   <style>
@@ -24,11 +24,32 @@
       border-radius: 5px;
       cursor: pointer;
     }
+     #selector {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 5px;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
   <div id="cesiumContainer"></div>
+
   <button id="toggleLayerBtn">切換為衛星雲圖</button>
+
+  <div id="selector">
+    <label for="citySelect">選擇縣市：</label>
+    <select id="citySelect">
+      <option value="">-- 請選擇 --</option>
+      <option value="taipei">台北市</option>
+      <option value="taichung">台中市</option>
+      <option value="kaohsiung">高雄市</option>
+      <!-- 可依照需要新增更多 -->
+    </select>
+  </div>
 
   <script>
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
@@ -45,36 +66,63 @@
 
     const toggleButton = document.getElementById('toggleLayerBtn');
 
-    // 建立多縣市 Tileset
-    const cityTilesets = [
-      {
-        name: '台中',
-        url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json',
-        position: Cesium.Cartesian3.fromDegrees(120.6839, 24.1371, 50)
-      },
-      {
-        name: '台北',
+    // 縣市對應的 3D Tiles 路徑與定位資訊（依實際需求調整）
+    const tilesetConfigs = {
+      taipei: {
         url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/0/tileset.json',
-        position: Cesium.Cartesian3.fromDegrees(121.5654, 25.0330, 50)
+        lon: 121.5654,
+        lat: 25.0330,
+        height: 50
       },
-      {
-        name: '高雄',
+      kaohsiung: {
         url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/4/tileset.json',
-        position: Cesium.Cartesian3.fromDegrees(120.302, 22.6273, 50)
+        lon: 120.2038,
+        lat: 23.0000,
+        height: 50
+      },
+      taichung: {
+        url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json',
+        lon: 120.6839,
+        lat: 24.1371,
+        height: 50
       }
-    ];
+    };
 
     const loadedTilesets = [];
+    let currentTileset = null;
 
-    // 載入 Tilesets
-    cityTilesets.forEach(city => {
-      Cesium.Cesium3DTileset.fromUrl(city.url).then(tileset => {
+    // 縣市選單事件
+    document.getElementById('citySelect').addEventListener('change', async function () {
+      const selected = this.value;
+
+      // 清除現有 tileset
+      if (currentTileset) {
+        viewer.scene.primitives.remove(currentTileset);
+        const index = loadedTilesets.indexOf(currentTileset);
+        if (index > -1) loadedTilesets.splice(index, 1);
+        currentTileset = null;
+      }
+
+      // 沒有選擇就不載入
+      if (!selected || !tilesetConfigs[selected]) return;
+
+      const config = tilesetConfigs[selected];
+
+      try {
+        const tileset = await Cesium.Cesium3DTileset.fromUrl(config.url);
+        currentTileset = tileset;
         viewer.scene.primitives.add(tileset);
         loadedTilesets.push(tileset);
-        console.log(`${city.name} 3D Tiles 載入完成`);
-      }).catch(err => {
-        console.error(`${city.name} 載入失敗：`, err);
-      });
+
+        const position = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height);
+        const modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(position);
+        tileset.modelMatrix = modelMatrix;
+
+        viewer.zoomTo(tileset);
+      } catch (error) {
+        alert("載入失敗：" + error.message);
+        console.error(error);
+      }
     });
 
     // 衛星圖層
