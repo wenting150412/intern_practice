@@ -67,7 +67,7 @@
         (position) => {
         const lon = position.coords.longitude;
         const lat = position.coords.latitude;
-        const height = 1000; // 可以調整高度以取得更好視角
+        const height = 800; // 可以調整高度以取得更好視角
 
         const center = Cesium.Cartesian3.fromDegrees(lon, lat, height);
 
@@ -85,9 +85,9 @@
         viewer.entities.add({
             position: Cesium.Cartesian3.fromDegrees(lon, lat),
             ellipse: {
-                semiMajorAxis: 10.0,
-                semiMinorAxis: 10.0,
-                material: Cesium.Color.RED.withAlpha(0.5),
+                semiMajorAxis: 13.0,
+                semiMinorAxis: 13.0,
+                material: Cesium.Color.RED,
                 heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
             }
             // label: {
