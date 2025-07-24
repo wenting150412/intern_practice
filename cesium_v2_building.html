@@ -44,6 +44,16 @@
       )
     });
 
+    // 添加內政部通用電子地圖 WMTS 圖層 (預設隱藏，等待切換)
+    const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
+      new Cesium.UrlTemplateImageryProvider({
+        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
+        tilingScheme: new Cesium.WebMercatorTilingScheme(),
+        maximumLevel: 18,
+      })
+    );
+    emapWmtsLayer.show = true; // 預設先顯示WMTS圖層
+
     const taichungCenter = Cesium.Cartesian3.fromDegrees(120.6839, 24.1871, 0);
     const modelTransform = Cesium.Transforms.eastNorthUpToFixedFrame(taichungCenter);
 
@@ -91,16 +101,6 @@
   }).catch(function(error) {
     console.error(`Error loading tileset: ${error}`);
   });
-
-    // 添加內政部通用電子地圖 WMTS 圖層 (預設隱藏，等待切換)
-    const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
-      new Cesium.UrlTemplateImageryProvider({
-        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
-        tilingScheme: new Cesium.WebMercatorTilingScheme(),
-        maximumLevel: 18,
-      })
-    );
-    emapWmtsLayer.show = true; // 預設先顯示WMTS圖層
 
     let esriImageryLayer = viewer.baseLayer; // 將預設的衛星圖層賦值給 esriImageryLayer
     let showingBuildingTileset = true; // 初始狀態：顯示 3D Tiles 和電子地圖底圖
