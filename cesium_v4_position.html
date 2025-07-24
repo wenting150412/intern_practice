@@ -2,45 +2,128 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>Leaflet 定位示範</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+  <title>Cesium 多縣市 3D Tiles 選擇</title>
+  <script src="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Cesium.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
   <style>
-    #map { height: 500px; }
+    html, body, #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #toggleLayerBtn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-
-  <button id="geolocation">取得我的位置</button>
-  <div id="map"></div>
+  <div id="cesiumContainer"></div>
 
   <script>
-    let map;
-    let marker;
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
 
-    function initMap(lat, lon) {
-      map = L.map('map').setView([lat, lon], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(map);
-      marker = L.marker([lat, lon]).addTo(map).bindPopup("你在這裡").openPopup();
-    }
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+      terrain: Cesium.Terrain.fromWorldTerrain(),
+      animation: false,
+      baseLayerPicker: false,
+      timeline: false,
+      baseLayer: Cesium.ImageryLayer.fromProviderAsync(
+        Cesium.ArcGisMapServerImageryProvider.fromUrl("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer")
+      )
+    });
 
+    const toggleButton = document.getElementById('toggleLayerBtn');
+
+    const loadedTilesets = [];
+    let currentTileset = null;
+
+
+    // // 衛星圖層
+    // const esriImageryLayer = viewer.baseLayer;
+
+    // 電子地圖圖層 (內政部 WMTS)
+    const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
+      new Cesium.UrlTemplateImageryProvider({
+        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
+        tilingScheme: new Cesium.WebMercatorTilingScheme(),
+        maximumLevel: 18
+      })
+    );
+    emapWmtsLayer.show = true;
+
+    // 啟用使用者定位
     if ("geolocation" in navigator) {
-      console.log('瀏覽器支援 Geolocation');
-      document.getElementById('geolocation').addEventListener('click', function () {
-        navigator.geolocation.getCurrentPosition(function (position) {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-          initMap(latitude, longitude);
-          console.log(`緯度：${latitude}，經度：${longitude}`);
-        }, function (error) {
-          console.error(`錯誤：${error.message}`);
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+        const lon = position.coords.longitude;
+        const lat = position.coords.latitude;
+        const height = 100; // 可以調整高度以取得更好視角
+
+        // 飛到使用者位置
+        viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(lon, lat, height),
+            orientation: {
+            heading: Cesium.Math.toRadians(0.0),
+            pitch: Cesium.Math.toRadians(-45.0),
+            roll: 0.0
+            }
         });
-      });
+
+        // 標記使用者位置
+        viewer.entities.add({
+            position: Cesium.Cartesian3.fromDegrees(lon, lat),
+            point: {
+            pixelSize: 10,
+            color: Cesium.Color.RED,
+            },
+            label: {
+            text: "你在這！",
+            font: "16px sans-serif",
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            pixelOffset: new Cesium.Cartesian2(0, -10),
+            }
+        });
+        },
+        (error) => {
+        console.error("取得定位失敗：", error.message);
+        }
+    );
     } else {
-      console.log('瀏覽器不支援 Geolocation');
+        alert("瀏覽器不支援定位功能！");
     }
+
+    // 初始相機位置：台灣
+    viewer.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 300000),
+      orientation: {
+        heading: Cesium.Math.toRadians(0),
+        pitch: Cesium.Math.toRadians(-90),
+        roll: 0
+      }
+    });
+
+    // Home 鍵自訂
+    viewer.homeButton.viewModel.command.beforeExecute.addEventListener(e => {
+      e.cancel = true;
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 300000),
+        orientation: {
+          heading: Cesium.Math.toRadians(0),
+          pitch: Cesium.Math.toRadians(-90),
+          roll: 0
+        }
+      });
+    });
   </script>
 </body>
 </html>
