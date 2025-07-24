@@ -1,34 +1,46 @@
-<script src="<https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js>"></script>
-<link rel="stylesheet" href="<https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css>" />
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>Leaflet 定位示範</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+  <style>
+    #map { height: 500px; }
+  </style>
+</head>
+<body>
 
-<script>
-let map;
-let marker;
+  <button id="geolocation">取得我的位置</button>
+  <div id="map"></div>
 
-function initMap(lat, lon) {
-  map = L.map('map').setView([lat, lon], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-  }).addTo(map);
-  marker = L.marker([lat, lon]).addTo(map);
-}
+  <script>
+    let map;
+    let marker;
 
-if ("geolocation" in navigator) {
-  console.log('瀏覽器支援 Geolocation');
-  document.getElementById('geolocation').addEventListener('click', function () {
-    function successCallback(position) {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-      initMap(latitude, longitude);
-      console.log(`緯度：${latitude}，經度：${longitude}`);
+    function initMap(lat, lon) {
+      map = L.map('map').setView([lat, lon], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      marker = L.marker([lat, lon]).addTo(map).bindPopup("你在這裡").openPopup();
     }
 
-    function errorCallback(error) {
-      console.error(`錯誤：${error.message}`);
+    if ("geolocation" in navigator) {
+      console.log('瀏覽器支援 Geolocation');
+      document.getElementById('geolocation').addEventListener('click', function () {
+        navigator.geolocation.getCurrentPosition(function (position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          initMap(latitude, longitude);
+          console.log(`緯度：${latitude}，經度：${longitude}`);
+        }, function (error) {
+          console.error(`錯誤：${error.message}`);
+        });
+      });
+    } else {
+      console.log('瀏覽器不支援 Geolocation');
     }
-    navigator.geolocation.getCurrentPosition(successCallback, errorCallback, options);
-  });
-} else {
-  console.log('瀏覽器不支援 Geolocation');
-}
-</script>
+  </script>
+</body>
+</html>
