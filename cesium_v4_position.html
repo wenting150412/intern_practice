@@ -80,16 +80,62 @@
         )
         });
 
-        
         // 啟用使用者定位
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
-                (position) => {
+                async (position) => {
                     const lon = position.coords.longitude;
                     const lat = position.coords.latitude;
-                    const height = 800; // 可以調整高度以取得更好視角
-
+                    const height = 800;
                     const center = Cesium.Cartesian3.fromDegrees(lon, lat, height);
+
+                    // 自動判斷距離最近的縣市
+                    function getNearestCity(lon, lat) {
+                        let nearest = null;
+                        let minDistance = Number.MAX_VALUE;
+                        for (const key in tilesetConfigs) {
+                            const city = tilesetConfigs[key];
+                            const dLon = city.lon - lon;
+                            const dLat = city.lat - lat;
+                            const dist = Math.sqrt(dLon * dLon + dLat * dLat);
+                            if (dist < minDistance) {
+                                minDistance = dist;
+                                nearest = key;
+                            }
+                        }
+                        return nearest;
+                    }
+
+                    const cityKey = getNearestCity(lon, lat);
+                    const config = tilesetConfigs[cityKey];
+
+                    // 載入該縣市 tileset
+                    if (currentTileset) viewer.scene.primitives.remove(currentTileset);
+                    const tileset = await Cesium.Cesium3DTileset.fromUrl(config.url);
+                    currentTileset = tileset;
+                    viewer.scene.primitives.add(tileset);
+
+                    // 設定 clipping planes 限制顯示區域 1km 內
+                    const clippingPlanes = new Cesium.ClippingPlaneCollection({
+                        planes: [],
+                        unionClippingRegions: true
+                    });
+
+                    function createPlane(offsetLon, offsetLat, normalLon, normalLat) {
+                        const point = Cesium.Cartesian3.fromDegrees(lon + offsetLon, lat + offsetLat, 0);
+                        const normal = Cesium.Cartesian3.normalize(
+                            Cesium.Cartesian3.subtract(Cesium.Cartesian3.fromDegrees(lon + normalLon, lat + normalLat, 0), point, new Cesium.Cartesian3()),
+                            new Cesium.Cartesian3()
+                        );
+                        return new Cesium.ClippingPlane(normal, 0.0);
+                    }
+
+                    // 約略為 1 公里範圍（1度緯度約111km）
+                    clippingPlanes.add(createPlane(0.009, 0, 1, 0));   // 東
+                    clippingPlanes.add(createPlane(-0.009, 0, -1, 0)); // 西
+                    clippingPlanes.add(createPlane(0, 0.009, 0, 1));   // 北
+                    clippingPlanes.add(createPlane(0, -0.009, 0, -1)); // 南
+                    tileset.clippingPlanes = clippingPlanes;
 
                     // 飛到使用者位置
                     viewer.camera.flyTo({
@@ -105,19 +151,19 @@
                     viewer.entities.add({
                         position: Cesium.Cartesian3.fromDegrees(lon, lat),
                         ellipse: {
-                            semiMajorAxis: 10.0,
-                            semiMinorAxis: 10.0,
+                            semiMajorAxis: 8.0,
+                            semiMinorAxis: 8.0,
                             material: Cesium.Color.RED,
                             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
                         }
                     });
+
+                    console.log("載入的縣市 tileset:", cityKey);
                 },
                 (error) => {
                     console.error("取得定位失敗：", error.message);
                 }
             );
-        } else {
-            alert("瀏覽器不支援定位功能！");
         }
 
         const toggleButton = document.getElementById('toggleLayerBtn');
