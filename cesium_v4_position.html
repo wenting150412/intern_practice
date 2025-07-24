@@ -82,15 +82,17 @@
         // 標記使用者位置
         viewer.entities.add({
             position: Cesium.Cartesian3.fromDegrees(lon, lat),
-            point: {
-            pixelSize: 10,
-            color: Cesium.Color.RED,
+            ellipse: {
+                semiMajorAxis: 100.0,
+                semiMinorAxis: 100.0,
+                material: Cesium.Color.RED.withAlpha(0.5),
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
             },
             label: {
-            text: "你在這！",
-            font: "16px sans-serif",
-            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            pixelOffset: new Cesium.Cartesian2(0, -10),
+                text: "你在這！",
+                font: "16px sans-serif",
+                verticalOrigin: Cesium.VerticalOrigin.TOP,
+                pixelOffset: new Cesium.Cartesian2(0, 10),
             }
         });
         },
