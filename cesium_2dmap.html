@@ -1,301 +1,288 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8" />
-    <title>Cesium 多縣市 3D Tiles 選擇</title>
-    <script src="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Cesium.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
-    <style>
-        html, body, #cesiumContainer {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        }
-        #toggleLayerBtn {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        z-index: 100;
-        background: white;
-        border: 1px solid #ccc;
-        padding: 10px;
-        border-radius: 5px;
-        cursor: pointer;
-        }
-        #selector {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        z-index: 10;
-        background: rgba(255, 255, 255, 0.9);
-        padding: 5px;
-        border-radius: 4px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Cesium 多縣市 3D Tiles 選擇</title>
+  <script src="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Cesium.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
+  <style>
+    html, body, #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #toggleLayerBtn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+     #selector {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 5px;
+      border-radius: 4px;
+    }
+  </style>
 </head>
 <body>
-    <div id="cesiumContainer"></div>
+  <div id="cesiumContainer"></div>
 
-    <!-- <button id="toggleLayerBtn">切換為衛星雲圖</button> -->
+  <!-- <button id="toggleLayerBtn">切換為衛星雲圖</button> -->
 
-    <div id="selector">
-        <label for="citySelect">選擇縣市：</label>
-        <select id="citySelect">
-        <option value="">-- 請選擇 --</option>
-        <option value="keelung">基隆市</option>
-        <option value="taipei">台北市</option>
-        <option value="new_taipei">新北市</option>
-        <option value="taoyuan">桃園市</option>
-        <option value="hsinchu_city">新竹市</option>
-        <option value="hsinchu_county">新竹縣</option>
-        <option value="miaoli">苗栗縣</option>
-        <option value="taichung">台中市</option>
-        <option value="changhua">彰化縣</option>
-        <option value="nantou">南投縣</option>
-        <option value="yunlin">雲林縣</option>
-        <option value="chiayi_city">嘉義市</option>
-        <option value="chiayi_county">嘉義縣</option>
-        <option value="tainan">台南市</option>
-        <option value="kaohsiung">高雄市</option>
-        <option value="pingtung">屏東縣</option>
-        <option value="taitung">台東縣</option>
-        <option value="hualien">花蓮縣</option>
-        <option value="yilan">宜蘭縣</option>
-        <option value="kinmen">金門縣</option>
-        <option value="penghu">澎湖縣</option>
-        <option value="lienchiang">連江縣</option>
+  <div id="selector">
+    <label for="citySelect">選擇縣市：</label>
+    <select id="citySelect">
+      <option value="">-- 請選擇 --</option>
+      <option value="keelung">基隆市</option>
+      <option value="taipei">台北市</option>
+      <option value="new_taipei">新北市</option>
+      <option value="taoyuan">桃園市</option>
+      <option value="hsinchu_city">新竹市</option>
+      <option value="hsinchu_county">新竹縣</option>
+      <option value="miaoli">苗栗縣</option>
+      <option value="taichung">台中市</option>
+      <option value="changhua">彰化縣</option>
+      <option value="nantou">南投縣</option>
+      <option value="yunlin">雲林縣</option>
+      <option value="chiayi_city">嘉義市</option>
+      <option value="chiayi_county">嘉義縣</option>
+      <option value="tainan">台南市</option>
+      <option value="kaohsiung">高雄市</option>
+      <option value="pingtung">屏東縣</option>
+      <option value="taitung">台東縣</option>
+      <option value="hualien">花蓮縣</option>
+      <option value="yilan">宜蘭縣</option>
+      <option value="kinmen">金門縣</option>
+      <option value="penghu">澎湖縣</option>
+      <option value="lienchiang">連江縣</option>
 
 
-        </select>
-    </div>
+    </select>
+  </div>
 
-    <script>
-        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
 
-        const viewer = new Cesium.Viewer('cesiumContainer', {
-        //   terrain: Cesium.Terrain.fromWorldTerrain(),
-        sceneMode: Cesium.SceneMode.SCENE3D,
-        animation: false,
-        baseLayerPicker: false,
-        timeline: false,
-        baseLayer: Cesium.ImageryLayer.fromProviderAsync(
-            Cesium.ArcGisMapServerImageryProvider.fromUrl("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer")
-        )
-        });
+  <script>
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
 
-        const toggleButton = document.getElementById('toggleLayerBtn');
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+    //   terrain: Cesium.Terrain.fromWorldTerrain(),
+      animation: false,
+      baseLayerPicker: false,
+      timeline: false,
+      baseLayer: Cesium.ImageryLayer.fromProviderAsync(
+        Cesium.ArcGisMapServerImageryProvider.fromUrl("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer")
+      ),
+      imageryProvider: false // 不自動加入預設底圖
+    });
 
-        // 縣市對應的 3D Tiles 路徑與定位資訊（依實際需求調整）
-        const tilesetConfigs = {
-            taipei: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/0/tileset.json',
-                lon: 121.5654,
-                lat: 25.0330,
-                height: 0
-            },
-            taichung: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json',
-                lon: 120.6839,
-                lat: 24.1371,
-                height: 0
-            },
-            keelung: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/2/tileset.json',
-                lon: 121.7445,
-                lat: 25.1276,
-                height: 0
-            },
-            tainan: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/3/tileset.json',
-                lon: 120.2270,
-                lat: 22.9999,
-                height: 0
-            },
-            kaohsiung: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/4/tileset.json',
-                lon: 120.6660,
-                lat: 22.6273,
-                height: 0
-            },
-            new_taipei: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/5/tileset.json',
-                lon: 121.6739,
-                lat: 24.9157,
-                height: 0
-            },
-            yilan: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/6/tileset.json',
-                lon: 121.7195,
-                lat: 24.7021,
-                height: 0
-            },
-            taoyuan: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/7/tileset.json',
-                lon: 121.2168,
-                lat: 24.9372,
-                height: 0
-            },
-            chiayi_city: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/8/tileset.json',
-                lon: 120.4473,
-                lat: 23.4755,
-                height: 0
-            },
-            hsinchu_county: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/9/tileset.json',
-                lon: 121.0182,
-                lat: 24.8387,
-                height: 0
-            },
-            miaoli: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/10/tileset.json',
-                lon: 120.9417,
-                lat: 24.4892,
-                height: 0
-            },
-            nantou: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/11/tileset.json',
-                lon: 120.9876,
-                lat: 23.8388,
-                height: 0
-            },
-            changhua: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/12/tileset.json',
-                lon: 120.4818,
-                lat: 24.0518,
-                height: 0
-            },
-            hsinchu_city: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/13/tileset.json',
-                lon: 120.9686,
-                lat: 24.8039,
-                height: 0
-            },
-            yunlin: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/14/tileset.json',
-                lon: 120.3897,
-                lat: 23.7559,
-                height: 0
-            },
-            chiayi_county: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/15/tileset.json',
-                lon: 120.2550,
-                lat: 23.4518,
-                height: 0
-            },
-            pingtung: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/16/tileset.json',
-                lon: 120.5487,
-                lat: 22.5519,
-                height: 0
-            },
-            hualien: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/17/tileset.json',
-                lon: 121.3542,
-                lat: 23.7569,
-                height: 0
-            },
-            taitung: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/18/tileset.json',
-                lon: 121.1132,
-                lat: 22.7610,
-                height: 0
-            },
-            kinmen: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/19/tileset.json',
-                lon: 118.3171,
-                lat: 24.4321,
-                height: 0
-            },
-            penghu: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/20/tileset.json',
-                lon: 119.6151,
-                lat: 23.5655,
-                height: 0
-            },
-            lienchiang: {
-                url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/21/tileset.json',
-                lon: 119.9510,
-                lat: 26.1608,
-                height: 0
-            }
-        };
+    const toggleButton = document.getElementById('toggleLayerBtn');
 
-        const loadedTilesets = [];
-        let currentTileset = null;
+    // 縣市對應的 3D Tiles 路徑與定位資訊（依實際需求調整）
+    const tilesetConfigs = {
+    taipei: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/0/tileset.json',
+      lon: 121.5654,
+      lat: 25.0330,
+      height: 50
+    },
+    taichung: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json',
+      lon: 120.6839,
+      lat: 24.1371,
+      height: 50
+    },
+    keelung: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/2/tileset.json',
+      lon: 121.7445,
+      lat: 25.1276,
+      height: 50
+    },
+    tainan: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/3/tileset.json',
+      lon: 120.2270,
+      lat: 22.9999,
+      height: 50
+    },
+    kaohsiung: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/4/tileset.json',
+      lon: 120.6660,
+      lat: 22.6273,
+      height: 50
+    },
+    new_taipei: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/5/tileset.json',
+      lon: 121.6739,
+      lat: 24.9157,
+      height: 50
+    },
+    yilan: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/6/tileset.json',
+      lon: 121.7195,
+      lat: 24.7021,
+      height: 50
+    },
+    taoyuan: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/7/tileset.json',
+      lon: 121.2168,
+      lat: 24.9372,
+      height: 50
+    },
+    chiayi_city: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/8/tileset.json',
+      lon: 120.4473,
+      lat: 23.4755,
+      height: 50
+    },
+    hsinchu_county: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/9/tileset.json',
+      lon: 121.0182,
+      lat: 24.8387,
+      height: 50
+    },
+    miaoli: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/10/tileset.json',
+      lon: 120.9417,
+      lat: 24.4892,
+      height: 50
+    },
+    nantou: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/11/tileset.json',
+      lon: 120.9876,
+      lat: 23.8388,
+      height: 50
+    },
+    changhua: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/12/tileset.json',
+      lon: 120.4818,
+      lat: 24.0518,
+      height: 50
+    },
+    hsinchu_city: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/13/tileset.json',
+      lon: 120.9686,
+      lat: 24.8039,
+      height: 50
+    },
+    yunlin: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/14/tileset.json',
+      lon: 120.3897,
+      lat: 23.7559,
+      height: 50
+    },
+    chiayi_county: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/15/tileset.json',
+      lon: 120.2550,
+      lat: 23.4518,
+      height: 50
+    },
+    pingtung: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/16/tileset.json',
+      lon: 120.5487,
+      lat: 22.5519,
+      height: 50
+    },
+    hualien: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/17/tileset.json',
+      lon: 121.3542,
+      lat: 23.7569,
+      height: 50
+    },
+    taitung: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/18/tileset.json',
+      lon: 121.1132,
+      lat: 22.7610,
+      height: 50
+    },
+    kinmen: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/19/tileset.json',
+      lon: 118.3171,
+      lat: 24.4321,
+      height: 50
+    },
+    penghu: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/20/tileset.json',
+      lon: 119.6151,
+      lat: 23.5655,
+      height: 50
+    },
+    lienchiang: {
+      url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/21/tileset.json',
+      lon: 119.9510,
+      lat: 26.1608,
+      height: 50
+    }
+  };
 
-        // 縣市選單事件
-        document.getElementById('citySelect').addEventListener('change', async function () {
-        const selected = this.value;
 
-        // 清除現有 tileset
-        if (currentTileset) {
-            viewer.scene.primitives.remove(currentTileset);
-            const index = loadedTilesets.indexOf(currentTileset);
-            if (index > -1) loadedTilesets.splice(index, 1);
-            currentTileset = null;
-        }
+    const loadedTilesets = [];
+    let currentTileset = null;
 
-        // 沒有選擇就不載入
-        if (!selected || !tilesetConfigs[selected]) return;
+    // 縣市選單事件
+    document.getElementById('citySelect').addEventListener('change', async function () {
+      const selected = this.value;
 
-        const config = tilesetConfigs[selected];
+      // 清除現有 tileset
+      if (currentTileset) {
+        viewer.scene.primitives.remove(currentTileset);
+        const index = loadedTilesets.indexOf(currentTileset);
+        if (index > -1) loadedTilesets.splice(index, 1);
+        currentTileset = null;
+      }
 
-        try {
-            const tileset = await Cesium.Cesium3DTileset.fromUrl(config.url);
-            currentTileset = tileset;
-            viewer.scene.primitives.add(tileset);
-            loadedTilesets.push(tileset);
+      // 沒有選擇就不載入
+      if (!selected || !tilesetConfigs[selected]) return;
 
-            const position = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height);
+      const config = tilesetConfigs[selected];
 
-        //     viewer.zoomTo(tileset).then(() => {
-        //       const center = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height + 30000); // 高一點點
-        //       viewer.camera.flyTo({
-        //         destination: center,
-        //         orientation: {
-        //         heading: Cesium.Math.toRadians(0),       // 面向正北
-        //         pitch: Cesium.Math.toRadians(-90),       // 垂直朝下看
-        //         roll: 0
-        //       },
-        //       duration: 2.5
-        //     });
-        //   });
-        //   } catch (error) {
-        //     alert("載入失敗：" + error.message);
-        //     console.error(error);
-        //   }
+      try {
+        const tileset = await Cesium.Cesium3DTileset.fromUrl(config.url);
+        currentTileset = tileset;
+        viewer.scene.primitives.add(tileset);
+        loadedTilesets.push(tileset);
 
-        const center = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height + 30000);
-            viewer.camera.flyTo({
+        const position = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height);
+
+        viewer.zoomTo(tileset).then(() => {
+          const center = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height + 5000); // 高一點點
+          viewer.camera.flyTo({
             destination: center,
             orientation: {
-                heading: Cesium.Math.toRadians(0),
-                pitch: Cesium.Math.toRadians(-90),
-                roll: 0
-            },
-            duration: 2.5
-            });
-        }
-        catch (error) {
-            alert("載入失敗：" + error.message);
-            console.error(error);
-        }  
+            heading: Cesium.Math.toRadians(0),       // 面向正北
+            pitch: Cesium.Math.toRadians(-90),       // 垂直朝下看
+            roll: 0
+          },
+          duration: 2.5
+        });
+      });
+      } catch (error) {
+        alert("載入失敗：" + error.message);
+        console.error(error);
+      }
+    });
 
     // // 衛星圖層
     // const esriImageryLayer = viewer.baseLayer;
 
     // 電子地圖圖層 (內政部 WMTS)
-    // const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
-    //   new Cesium.UrlTemplateImageryProvider({
-    //     url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
-    //     tilingScheme: new Cesium.WebMercatorTilingScheme(),
-    //     maximumLevel: 18
-    //   })
-    // );
-    // emapWmtsLayer.show = true;
+    const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
+      new Cesium.UrlTemplateImageryProvider({
+        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
+        tilingScheme: new Cesium.WebMercatorTilingScheme(),
+        maximumLevel: 18
+      })
+    );
+    emapWmtsLayer.show = true;
 
     let showingBuilding = true;
 
