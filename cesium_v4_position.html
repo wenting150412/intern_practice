@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>Cesium 多縣市 3D Tiles 選擇</title>
+  <title>Cesium 多縣市 3D Tiles + 使用者定位</title>
   <script src="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Cesium.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
   <style>
@@ -24,10 +24,48 @@
       border-radius: 5px;
       cursor: pointer;
     }
+    /* #selector {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 5px;
+      border-radius: 4px;
+    } */
   </style>
 </head>
 <body>
   <div id="cesiumContainer"></div>
+
+  <!-- <div id="selector">
+    <label for="citySelect">選擇縣市：</label>
+    <select id="citySelect">
+      <option value="">-- 請選擇 --</option>
+      <option value="keelung">基隆市</option>
+      <option value="taipei">台北市</option>
+      <option value="new_taipei">新北市</option>
+      <option value="taoyuan">桃園市</option>
+      <option value="hsinchu_city">新竹市</option>
+      <option value="hsinchu_county">新竹縣</option>
+      <option value="miaoli">苗栗縣</option>
+      <option value="taichung">台中市</option>
+      <option value="changhua">彰化縣</option>
+      <option value="nantou">南投縣</option>
+      <option value="yunlin">雲林縣</option>
+      <option value="chiayi_city">嘉義市</option>
+      <option value="chiayi_county">嘉義縣</option>
+      <option value="tainan">台南市</option>
+      <option value="kaohsiung">高雄市</option>
+      <option value="pingtung">屏東縣</option>
+      <option value="taitung">台東縣</option>
+      <option value="hualien">花蓮縣</option>
+      <option value="yilan">宜蘭縣</option>
+      <option value="kinmen">金門縣</option>
+      <option value="penghu">澎湖縣</option>
+      <option value="lienchiang">連江縣</option>
+    </select>
+  </div> -->
 
   <script>
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
@@ -47,64 +85,67 @@
     const loadedTilesets = [];
     let currentTileset = null;
 
+    // // 電子地圖圖層 (內政部 WMTS)
+    // const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
+    //   new Cesium.UrlTemplateImageryProvider({
+    //     url: "https://3dtiles.nlsc.gov.tw/Terrain20M/tiles3d/電子地圖/0/0/0/tileset.json",
+    //     tilingScheme: new Cesium.WebMercatorTilingScheme(),
+    //     maximumLevel: 18
+    //   })
+    // );
+    // emapWmtsLayer.show = true;
 
-    // // 衛星圖層
-    // const esriImageryLayer = viewer.baseLayer;
-
-    // 電子地圖圖層 (內政部 WMTS)
-    const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
-      new Cesium.UrlTemplateImageryProvider({
-        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
-        tilingScheme: new Cesium.WebMercatorTilingScheme(),
-        maximumLevel: 18
-      })
+    // 載入 3D 地形圖層（臺灣通用電子地圖）
+    const terrainTileset = viewer.scene.primitives.add(
+    new Cesium.Cesium3DTileset({
+        url: "https://3dtiles.nlsc.gov.tw/Terrain20M/tiles3d/電子地圖/0/0/0/tileset.json"
+    })
     );
-    emapWmtsLayer.show = true;
+
+    terrainTileset.readyPromise.then(() => {
+        viewer.zoomTo(terrainTileset);
+    });
 
     // 啟用使用者定位
     if ("geolocation" in navigator) {
-    navigator.geolocation.getCurrentPosition(
+        navigator.geolocation.getCurrentPosition(
         (position) => {
-        const lon = position.coords.longitude;
-        const lat = position.coords.latitude;
-        const height = 800; // 可以調整高度以取得更好視角
+            const lon = position.coords.longitude;
+            const lat = position.coords.latitude;
+            const height = 800; // 可以調整高度以取得更好視角
 
-        const center = Cesium.Cartesian3.fromDegrees(lon, lat, height);
+            const center = Cesium.Cartesian3.fromDegrees(lon, lat, height);
 
-        // 飛到使用者位置
-        viewer.camera.flyTo({
-            destination: center,
-            orientation: {
-                heading: Cesium.Math.toRadians(0.0),
-                pitch: Cesium.Math.toRadians(-90.0),
-                roll: 0.0
-            }
-        });
+            // 飛到使用者位置
+            viewer.camera.flyTo({
+                destination: center,
+                orientation: {
+                    heading: Cesium.Math.toRadians(0.0),
+                    pitch: Cesium.Math.toRadians(-90.0),
+                    roll: 0.0
+                }
+            });
 
-        // 標記使用者位置
-        viewer.entities.add({
-            position: Cesium.Cartesian3.fromDegrees(lon, lat),
-            ellipse: {
-                semiMajorAxis: 10.0,
-                semiMinorAxis: 10.0,
-                material: Cesium.Color.RED,
-                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-            }
-            // label: {
-            //     text: "你在這！",
-            //     font: "16px sans-serif",
-            //     verticalOrigin: Cesium.VerticalOrigin.TOP,
-            //     pixelOffset: new Cesium.Cartesian2(0, 10),
-            // }
-        });
+            // 標記使用者位置
+            viewer.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(lon, lat),
+                ellipse: {
+                    semiMajorAxis: 10.0,
+                    semiMinorAxis: 10.0,
+                    material: Cesium.Color.RED,
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                }
+            });
         },
         (error) => {
             console.error("取得定位失敗：", error.message);
         }
-    );
+        );
     } else {
         alert("瀏覽器不支援定位功能！");
     }
+
+
 
     // 初始相機位置：台灣
     viewer.camera.setView({
