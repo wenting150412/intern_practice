@@ -24,48 +24,10 @@
       border-radius: 5px;
       cursor: pointer;
     }
-    /* #selector {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 10;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 5px;
-      border-radius: 4px;
-    } */
   </style>
 </head>
 <body>
   <div id="cesiumContainer"></div>
-
-  <!-- <div id="selector">
-    <label for="citySelect">選擇縣市：</label>
-    <select id="citySelect">
-      <option value="">-- 請選擇 --</option>
-      <option value="keelung">基隆市</option>
-      <option value="taipei">台北市</option>
-      <option value="new_taipei">新北市</option>
-      <option value="taoyuan">桃園市</option>
-      <option value="hsinchu_city">新竹市</option>
-      <option value="hsinchu_county">新竹縣</option>
-      <option value="miaoli">苗栗縣</option>
-      <option value="taichung">台中市</option>
-      <option value="changhua">彰化縣</option>
-      <option value="nantou">南投縣</option>
-      <option value="yunlin">雲林縣</option>
-      <option value="chiayi_city">嘉義市</option>
-      <option value="chiayi_county">嘉義縣</option>
-      <option value="tainan">台南市</option>
-      <option value="kaohsiung">高雄市</option>
-      <option value="pingtung">屏東縣</option>
-      <option value="taitung">台東縣</option>
-      <option value="hualien">花蓮縣</option>
-      <option value="yilan">宜蘭縣</option>
-      <option value="kinmen">金門縣</option>
-      <option value="penghu">澎湖縣</option>
-      <option value="lienchiang">連江縣</option>
-    </select>
-  </div> -->
 
   <script>
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
@@ -85,26 +47,23 @@
     const loadedTilesets = [];
     let currentTileset = null;
 
-    // // 電子地圖圖層 (內政部 WMTS)
+    // 電子地圖圖層 (內政部 WMTS)
     // const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
     //   new Cesium.UrlTemplateImageryProvider({
-    //     url: "https://3dtiles.nlsc.gov.tw/Terrain20M/tiles3d/電子地圖/0/0/0/tileset.json",
+    //     url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
     //     tilingScheme: new Cesium.WebMercatorTilingScheme(),
     //     maximumLevel: 18
     //   })
     // );
+
     // emapWmtsLayer.show = true;
 
-    // 載入 3D 地形圖層（臺灣通用電子地圖）
-    const terrainTileset = viewer.scene.primitives.add(
-    new Cesium.Cesium3DTileset({
+    // 載入 臺灣通用電子地圖的 3D Tiles
+    const emap3DTileset = new Cesium.Cesium3DTileset({
         url: "https://3dtiles.nlsc.gov.tw/Terrain20M/tiles3d/電子地圖/0/0/0/tileset.json"
-    })
-    );
-
-    terrainTileset.readyPromise.then(() => {
-        viewer.zoomTo(terrainTileset);
     });
+
+    viewer.scene.primitives.add(emap3DTileset);
 
     // 啟用使用者定位
     if ("geolocation" in navigator) {
@@ -144,8 +103,6 @@
     } else {
         alert("瀏覽器不支援定位功能！");
     }
-
-
 
     // 初始相機位置：台灣
     viewer.camera.setView({
