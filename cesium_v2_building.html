@@ -44,16 +44,6 @@
       )
     });
 
-    // 添加內政部通用電子地圖 WMTS 圖層 (預設隱藏，等待切換)
-    const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
-      new Cesium.UrlTemplateImageryProvider({
-        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
-        tilingScheme: new Cesium.WebMercatorTilingScheme(),
-        maximumLevel: 18,
-      })
-    );
-    emapWmtsLayer.show = true; // 預設先顯示WMTS圖層
-
     const taichungCenter = Cesium.Cartesian3.fromDegrees(120.6839, 24.1871, 0);
     const modelTransform = Cesium.Transforms.eastNorthUpToFixedFrame(taichungCenter);
 
@@ -69,44 +59,52 @@
     buildingTileset = tileset;
     viewer.scene.primitives.add(buildingTileset);
 
-    // const boundingSphere = tileset.boundingSphere;
-    // const cartographic = Cesium.Cartographic.fromCartesian(boundingSphere.center);
-    // const surface = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 0.0);
-    // const offset = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 20); // 向上 20 公尺
-    // const translation = Cesium.Cartesian3.subtract(offset, surface, new Cesium.Cartesian3());
-    // tileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
-    // viewer.zoomTo(tileset);
-
-    const correctedPosition = Cesium.Cartesian3.fromDegrees(120.6839, 24.1371, 50);
+    const boundingSphere = tileset.boundingSphere;
+    const cartographic = Cesium.Cartographic.fromCartesian(boundingSphere.center);
+    const surface = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 0.0);
+    const offset = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 20); // 向上 20 公尺
+    const translation = Cesium.Cartesian3.subtract(offset, surface, new Cesium.Cartesian3());
+    tileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
+    viewer.zoomTo(tileset);
 
     // viewer.flyTo(buildingTileset);
     console.log("3D Tiles Model loaded successfully!");
     
     // 在 tileset 載入成功後，才綁定按鈕點擊事件
-    // toggleButton.onclick = function () {
-    //   if (showingBuildingTileset) {
-    //     buildingTileset.show = false;
-    //     esriImageryLayer.show = true;
-    //     emapWmtsLayer.show = false;
-    //     this.textContent = '切換回 3D 建築模型 + 電子地圖底圖';
-    //   } else {
-    //     buildingTileset.show = true;
-    //     esriImageryLayer.show = false;
-    //     emapWmtsLayer.show = true;
-    //     this.textContent = '切換為衛星雲圖';
-    //   }
-    //   showingBuildingTileset = !showingBuildingTileset;
-    // };
+    toggleButton.onclick = function () {
+      if (showingBuildingTileset) {
+        buildingTileset.show = false;
+        esriImageryLayer.show = true;
+        emapWmtsLayer.show = false;
+        this.textContent = '切換回 3D 建築模型 + 電子地圖底圖';
+      } else {
+        buildingTileset.show = true;
+        esriImageryLayer.show = false;
+        emapWmtsLayer.show = true;
+        this.textContent = '切換為衛星雲圖';
+      }
+      showingBuildingTileset = !showingBuildingTileset;
+    };
 
   }).catch(function(error) {
     console.error(`Error loading tileset: ${error}`);
   });
 
+    // 添加內政部通用電子地圖 WMTS 圖層 (預設隱藏，等待切換)
+    const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
+      new Cesium.UrlTemplateImageryProvider({
+        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
+        tilingScheme: new Cesium.WebMercatorTilingScheme(),
+        maximumLevel: 18,
+      })
+    );
+    emapWmtsLayer.show = true; // 預設先顯示WMTS圖層
+
     let esriImageryLayer = viewer.baseLayer; // 將預設的衛星圖層賦值給 esriImageryLayer
     let showingBuildingTileset = true; // 初始狀態：顯示 3D Tiles 和電子地圖底圖
 
-    // const toggleButton = document.getElementById('toggleLayerBtn');
-    // toggleButton.textContent = '切換為衛星雲圖'; // 初始按鈕文字
+    const toggleButton = document.getElementById('toggleLayerBtn');
+    toggleButton.textContent = '切換為衛星雲圖'; // 初始按鈕文字
 
     // 初始視角：台中市
     viewer.camera.setView({
