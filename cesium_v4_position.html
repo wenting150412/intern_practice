@@ -166,26 +166,46 @@
                     }
                 });
 
-                // 紅點標記
-                if (userPoint) viewer.entities.remove(userPoint);
+                // // 紅點標記
+                // if (userPoint) viewer.entities.remove(userPoint);
+                // userPoint = viewer.entities.add({
+                //     position: Cesium.Cartesian3.fromDegrees(lon, lat),
+                //     ellipse: {
+                //         semiMajorAxis: 8.0,
+                //         semiMinorAxis: 8.0,
+                //         material: Cesium.Color.RED,
+                //         height: 0,
+                //         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                //     }
+                // });
+
+                // // 動態縮放紅點
+                // viewer.scene.camera.changed.addEventListener(() => {
+                //     const cameraHeight = viewer.scene.camera.positionCartographic.height;
+                //     const scale = Math.max(0.5, Math.min(20, cameraHeight / 2000));
+                //     userPoint.ellipse.semiMajorAxis = 8.0 * scale;
+                //     userPoint.ellipse.semiMinorAxis = 8.0 * scale;
+                // });
+
+                // 紅點標記 (pixel point)
                 userPoint = viewer.entities.add({
                     position: Cesium.Cartesian3.fromDegrees(lon, lat),
-                    ellipse: {
-                        semiMajorAxis: 8.0,
-                        semiMinorAxis: 8.0,
-                        material: Cesium.Color.RED,
-                        height: 0,
+                    point: {
+                        pixelSize: 20,   // 初始大小
+                        color: Cesium.Color.RED,
                         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
                     }
                 });
 
-                // 動態縮放紅點
                 viewer.scene.camera.changed.addEventListener(() => {
+                    if (!userPoint) return;
+
                     const cameraHeight = viewer.scene.camera.positionCartographic.height;
-                    const scale = Math.max(0.5, Math.min(20, cameraHeight / 2000));
-                    userPoint.ellipse.semiMajorAxis = 8.0 * scale;
-                    userPoint.ellipse.semiMinorAxis = 8.0 * scale;
+                    // 鏡頭越近，點越小；鏡頭越遠，點越大
+                    const newSize = Math.max(5, Math.min(30, 100000 / cameraHeight));
+                    userPoint.point.pixelSize = newSize;
                 });
+
 
                 console.log("載入的縣市 tileset:", cityKey);
             });
