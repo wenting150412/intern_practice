@@ -43,6 +43,8 @@
       )
     });
 
+    viewer.scene.globe.depthTestAgainstTerrain = true;
+
     // 電子地圖圖層 (內政部 WMTS)
     const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
       new Cesium.UrlTemplateImageryProvider({
