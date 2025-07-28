@@ -97,16 +97,15 @@
                 show: false
               });
 
-              entity.description = function () {
-                const props = this.properties;
-                let html = '<table class="cesium-infoBox-defaultTable">';
-                props.propertyNames.forEach(key => {
-                  html += `<tr><th>${key}</th><td>${props[key].getValue()}</td></tr>`;
-                });
-                html += '</table>';
-                return html;
-              };
-            }
+              entity.description = (function (props) {
+                  let html = '<table class="cesium-infoBox-defaultTable">';
+                  props.propertyNames.forEach(key => {
+                    html += `<tr><th>${key}</th><td>${props[key].getValue()}</td></tr>`;
+                  });
+                  html += '</table>';
+                  return html;
+                })(entity.properties);
+              }
 
             viewer.flyTo(dataSource);
           }).otherwise(function (error) {
