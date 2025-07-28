@@ -28,6 +28,8 @@
 </head>
 <body>
   <div id="cesiumContainer"></div>
+  <button id="toggleRepairBtn">顯示維修點位</button>
+
 
   <script>
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
@@ -52,66 +54,60 @@
     );
     emapWmtsLayer.show = true;
 
-    // 顯示資料點在地圖上的主函式
-    async function addRepairData() {
-      const positions = repairData.map((point) => ({
-        longitude: parseFloat(point.Longitude),
-        latitude: parseFloat(point.Latitude),
-        raw: point
-      }));
-
-      const terrainPositions = await Cesium.sampleTerrainMostDetailed(
-        viewer.terrainProvider,
-        positions.map(p => Cesium.Cartographic.fromDegrees(p.longitude, p.latitude))
-      );
-
-      for (let i = 0; i < terrainPositions.length; i++) {
-        const terrainPos = terrainPositions[i];
-        const point = positions[i].raw;
-        const height = terrainPos.height || 0;
-
-        const entity = viewer.entities.add({
-          position: Cesium.Cartesian3.fromDegrees(point.Longitude, point.Latitude, height + 1),
-          billboard: {
-            image: 'https://cdn-icons-png.flaticon.com/512/3756/3756712.png',
-            width: 32,
-            height: 32,
-            verticalOrigin: Cesium.VerticalOrigin.CENTER,
-            horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
-            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-          },
-          label: {
-            text: point.PRE_NO,
-            showBackground: false,
-            font: "14px sans-serif",
-            horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
-            verticalOrigin: Cesium.VerticalOrigin.CENTER,
-            show: false
-          },
-          description: `
-            <strong>案件編號：</strong> ${point.PRE_NO}<br/>
-            <strong>單位：</strong> ${point.UNIT}<br/>
-            <strong>路線：</strong> ${point.ROUTE}<br/>
-            <strong>原因：</strong> ${point.REASON}<br/>
-            <strong>經度：</strong> ${point.Longitude}<br/>
-            <strong>緯度：</strong> ${point.Latitude}
-          `
-        });
-
-        entity.name = '案件資訊';
-        repairEntities.push(entity); // 把所有點存起來，方便移除
-      }
-    }
-
+    let geojsonDataSource = null;
     let repairDataVisible = false;
 
     document.getElementById("toggleRepairBtn").addEventListener("click", function () {
       if (!repairDataVisible) {
-        addRepairData();
+        if (!geojsonDataSource) {
+          Cesium.GeoJsonDataSource.load('repairdata.geojson', {
+            clampToGround: true
+          }).then(function (dataSource) {
+            geojsonDataSource = dataSource;
+            viewer.dataSources.add(dataSource);
+
+            const entities = dataSource.entities.values;
+            for (let entity of entities) {
+              entity.billboard = new Cesium.BillboardGraphics({
+                image: 'https://cdn-icons-png.flaticon.com/512/3756/3756712.png',
+                width: 32,
+                height: 32,
+                verticalOrigin: Cesium.VerticalOrigin.CENTER,
+                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+              });
+
+              entity.label = new Cesium.LabelGraphics({
+                text: entity.properties?.PRE_NO || '',
+                font: '14px sans-serif',
+                showBackground: false,
+                horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+                verticalOrigin: Cesium.VerticalOrigin.CENTER,
+                show: false
+              });
+
+              entity.description = function () {
+                const props = this.properties;
+                let html = '<table class="cesium-infoBox-defaultTable">';
+                props.propertyNames.forEach(key => {
+                  html += `<tr><th>${key}</th><td>${props[key].getValue()}</td></tr>`;
+                });
+                html += '</table>';
+                return html;
+              };
+            }
+
+            viewer.flyTo(dataSource);
+          }).otherwise(function (error) {
+            console.error('載入 GeoJSON 失敗:', error);
+          });
+        } else {
+          viewer.dataSources.add(geojsonDataSource);
+        }
+
         repairDataVisible = true;
         this.textContent = "隱藏維修點位";
       } else {
-        removeRepairData();
+        viewer.dataSources.remove(geojsonDataSource, false);
         repairDataVisible = false;
         this.textContent = "顯示維修點位";
       }
@@ -127,7 +123,6 @@
         }
       });
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
-
     // 初始相機位置：台灣
     viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 300000),
