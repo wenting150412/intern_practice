@@ -108,7 +108,7 @@
               }
 
             viewer.flyTo(dataSource);
-          }).otherwise(function (error) {
+          }).catch(function (error) {
             console.error('載入 GeoJSON 失敗:', error);
           });
         } else {
