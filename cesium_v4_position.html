@@ -26,17 +26,28 @@
         }
         #selector {
         position: absolute;
+        top: 60px;
+        left: 10px;
+        z-index: 100;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 5px 10px;
+        border-radius: 4px;
+        }
+        #locateBtn {
+        position: absolute;
         top: 10px;
         left: 10px;
-        z-index: 10;
+        z-index: 100;
         background: rgba(255, 255, 255, 0.9);
-        padding: 5px;
+        padding: 8px 12px;
         border-radius: 4px;
         }
     </style>
 </head>
 <body>
     <div id="cesiumContainer"></div>
+    <button id="locateBtn">定位並載入建築物</button>
+
 
     <div id="selector">
         <label for="citySelect">選擇縣市：</label>
@@ -80,8 +91,12 @@
         )
         });
 
-        // 啟用使用者定位
-        if ("geolocation" in navigator) {
+        document.getElementById("locateBtn").addEventListener("click", () => {
+            if (!("geolocation" in navigator)) {
+                alert("此瀏覽器不支援定位功能");
+                return;
+            }
+
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
                     const lon = position.coords.longitude;
@@ -89,7 +104,6 @@
                     const height = 800;
                     const center = Cesium.Cartesian3.fromDegrees(lon, lat, height);
 
-                    // 自動判斷距離最近的縣市
                     function getNearestCity(lon, lat) {
                         let nearest = null;
                         let minDistance = Number.MAX_VALUE;
@@ -114,28 +128,6 @@
                     const tileset = await Cesium.Cesium3DTileset.fromUrl(config.url);
                     currentTileset = tileset;
                     viewer.scene.primitives.add(tileset);
-
-                    // 設定 clipping planes 限制顯示區域 1km 內
-                    const clippingPlanes = new Cesium.ClippingPlaneCollection({
-                        planes: [],
-                        unionClippingRegions: true
-                    });
-
-                    function createPlane(offsetLon, offsetLat, normalLon, normalLat) {
-                        const point = Cesium.Cartesian3.fromDegrees(lon + offsetLon, lat + offsetLat, 0);
-                        const normal = Cesium.Cartesian3.normalize(
-                            Cesium.Cartesian3.subtract(Cesium.Cartesian3.fromDegrees(lon + normalLon, lat + normalLat, 0), point, new Cesium.Cartesian3()),
-                            new Cesium.Cartesian3()
-                        );
-                        return new Cesium.ClippingPlane(normal, 0.0);
-                    }
-
-                    // 約略為 1 公里範圍（1度緯度約111km）
-                    // clippingPlanes.add(createPlane(0.009, 0, 1, 0));   // 東
-                    // clippingPlanes.add(createPlane(-0.009, 0, -1, 0)); // 西
-                    // clippingPlanes.add(createPlane(0, 0.009, 0, 1));   // 北
-                    // clippingPlanes.add(createPlane(0, -0.009, 0, -1)); // 南
-                    // tileset.clippingPlanes = clippingPlanes;
 
                     // 飛到使用者位置
                     viewer.camera.flyTo({
@@ -165,7 +157,8 @@
                     console.error("取得定位失敗：", error.message);
                 }
             );
-        }
+        });
+
 
         const toggleButton = document.getElementById('toggleLayerBtn');
 
