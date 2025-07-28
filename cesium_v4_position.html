@@ -202,7 +202,7 @@
 
                     const cameraHeight = viewer.scene.camera.positionCartographic.height;
                     // 鏡頭越近，點越小；鏡頭越遠，點越大
-                    const newSize = Math.max(1, 100000 / cameraHeight);
+                    const newSize = Math.max(10000 / cameraHeight);
                     userPoint.point.pixelSize = newSize;
                 });
 
