@@ -24,6 +24,17 @@
       border-radius: 5px;
       cursor: pointer;
     }
+    #toggleRepairBtn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -78,7 +89,7 @@
               });
 
               entity.label = new Cesium.LabelGraphics({
-                text: entity.properties?.PRE_NO || '',
+                text: entity.properties.PRE_NO.getValue(),
                 font: '14px sans-serif',
                 showBackground: false,
                 horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
