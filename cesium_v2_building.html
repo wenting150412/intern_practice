@@ -62,8 +62,8 @@
     const lon = config.lon, lat = config.lat;
     const boundingSphere = tileset.boundingSphere;
     const cartographic = Cesium.Cartographic.fromCartesian(boundingSphere.center);
-    const surface = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 0.0);
-    const offset = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, config.height); // 向上 20 公尺
+    const surface = Cesium.Cartesian3.fromRadians(lon, lat, 0.0);
+    const offset = Cesium.Cartesian3.fromRadians(lon, lat, config.height); // 向上 20 公尺
     const translation = Cesium.Cartesian3.subtract(offset, surface, new Cesium.Cartesian3());
     tileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
     viewer.zoomTo(tileset);
