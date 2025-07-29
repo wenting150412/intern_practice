@@ -5,7 +5,7 @@
   <title>Cesium 多縣市 3D Tiles 選擇</title>
   <script src="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Cesium.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
-  <style>
+  <!-- <style>
     html, body, #cesiumContainer {
       width: 100%;
       height: 100%;
@@ -35,7 +35,7 @@
       border-radius: 5px;
       cursor: pointer;
     } */
-  </style>
+  </style> -->
 </head>
 
 <body>
@@ -53,40 +53,41 @@
       width: 200px;
       font-size: 14px;
   ">
-    <!-- 切換維修點位 -->
-    <!-- <button id="toggleRepairBtn" style="width: 100%; margin-bottom: 5px;">顯示維修點位</button> -->
+  <!-- 檔案上傳 -->
+  <label for="RepairFileInput">上傳資料集</label>
+  <input type="file" id="RepairFileInput" accept=".json,.geojson" style="width: 100%; margin-bottom: 5px;" />
 
-    <!-- 檔案上傳 -->
-    <label for="RepairFileInput">上傳資料集</label>
-    <input type="file" id="RepairFileInput" accept=".json,.geojson" style="width: 100%; margin-bottom: 5px;" />
-
-    <!-- 圖示選擇 -->
-    <div id="iconChooser" style="margin-bottom: 5px;">
-      <strong>選擇圖示：</strong>
-      <div style="display: flex; gap: 4px; margin-top: 4px;">
-        <img src="https://cdn-icons-png.flaticon.com/512/3756/3756712.png" 
-             class="icon-option" data-url="https://cdn-icons-png.flaticon.com/512/3756/3756712.png" width="24" />
-        <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" 
-             class="icon-option" data-url="https://cdn-icons-png.flaticon.com/512/684/684908.png" width="24" />
-        <img src="https://cdn-icons-png.flaticon.com/512/1483/1483336.png" 
-             class="icon-option" data-url="https://cdn-icons-png.flaticon.com/512/1483/1483336.png" width="24" />
-      </div>
+  <!-- 圖示選擇 -->
+  <div id="iconChooser" style="margin-bottom: 5px;">
+    <strong>選擇圖示：</strong>
+    <div style="display: flex; gap: 4px; margin-top: 4px;">
+      <img src="https://cdn-icons-png.flaticon.com/512/3756/3756712.png" 
+            class="icon-option" data-url="https://cdn-icons-png.flaticon.com/512/3756/3756712.png" width="24" />
+      <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" 
+            class="icon-option" data-url="https://cdn-icons-png.flaticon.com/512/684/684908.png" width="24" />
+      <img src="https://cdn-icons-png.flaticon.com/512/1483/1483336.png" 
+            class="icon-option" data-url="https://cdn-icons-png.flaticon.com/512/1483/1483336.png" width="24" />
     </div>
-
-    <!-- 確認匯入 -->
-    <button id="confirmImportBtn" style="width: 100%; margin-bottom: 5px;">確認匯入</button>
-
-    <!-- 下拉選單 -->
-    <select id="RepairSelect" style="width: 100%; margin-bottom: 5px;">
-      <option value="">請選擇資料集</option>
-      <option value="default">預設資料</option>
-    </select>
-
-    <!-- 預設資料上傳 -->
-    <label for="DefaultGeojsonInput">選擇預設資料</label>
-    <input type="file" id="DefaultGeojsonInput" accept=".json,.geojson" style="width: 100%;" />
   </div>
-</body>
+
+  <!-- 確認匯入 -->
+  <button id="confirmImportBtn" style="width: 100%; margin-bottom: 5px;">確認匯入</button>
+
+  <!-- 下拉選單 -->
+  <select id="RepairSelect" style="width: 100%; margin-bottom: 5px;">
+    <option value="">請選擇資料集</option>
+    <option value="default">預設資料</option>
+  </select>
+
+  <!-- 預設資料上傳 -->
+  <label for="DefaultGeojsonInput">選擇預設資料</label>
+  <input type="file" id="DefaultGeojsonInput" accept=".json,.geojson" style="width: 100%;" />
+  </div>
+
+  <!-- 清除所有資料 -->
+  <button id="clearBtn" style="margin-top: 5px; width: 100%; background-color: #dc3545; color: white; border: none; padding: 5px; border-radius: 3px; cursor: pointer;">
+  清除所有資料
+  </button>
 
   <script>
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
@@ -117,6 +118,7 @@
     let repairDataVisible = false;
     let customRepairFiles = {};
     let RepairEntities = [];
+    let currentDataSource = null; // 目前顯示中的Cesium.DataSource
     let selectedIconUrl = "https://cdn-icons-png.flaticon.com/512/3756/3756712.png"; // 預設圖示
 
     function addRepairData() {
@@ -135,11 +137,17 @@
         });
     }
 
-    function removeRepairData() {
-      viewer.entities.removeAll();
-      viewer.dataSources.removeAll();
-      RepairEntities = [];
+    function removeAllData() {
+      if (currentDataSource) viewer.dataSources.remove(currentDataSource, true);
+      currentDataSource = null;
+      RepairEntities.length = 0;
+
+      // 清除下拉選單只有預設那兩欄
+      const RepairSelect = document.getElementById("RepairSelect");
+      RepairSelect.options.length = 2;
+      Object.keys(customRepairFiles).forEach(k => delete customRepairFiles[k]);
     }
+    document.getElementById("clearBtn").onclick = removeAllData;
 
     async function loadCustomRepairData(fileData) {
       const dataSource = await Cesium.GeoJsonDataSource.load(fileData.data, { clampToGround: true });
@@ -176,62 +184,6 @@
       }
     }
 
-    // document.getElementById("toggleRepairBtn").addEventListener("click", function () {
-    //   if (!repairDataVisible) {
-    //     if (!geojsonDataSource) {
-    //       Cesium.GeoJsonDataSource.load('repairdata.geojson', {
-    //         clampToGround: true
-    //       }).then(function (dataSource) {
-    //         geojsonDataSource = dataSource;
-    //         viewer.dataSources.add(dataSource);
-
-    //         const entities = dataSource.entities.values;
-    //         for (let entity of entities) {
-    //           entity.billboard = new Cesium.BillboardGraphics({
-    //             image: 'https://cdn-icons-png.flaticon.com/512/3756/3756712.png',
-    //             width: 32,
-    //             height: 32,
-    //             verticalOrigin: Cesium.VerticalOrigin.CENTER,
-    //             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-    //           });
-
-    //           entity.label = new Cesium.LabelGraphics({
-    //             text: entity.properties.PRE_NO.getValue(),
-    //             font: '14px sans-serif',
-    //             showBackground: false,
-    //             horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
-    //             verticalOrigin: Cesium.VerticalOrigin.CENTER,
-    //             show: false
-    //           });
-
-    //           entity.description = (function (props) {
-    //               let html = '<table class="cesium-infoBox-defaultTable">';
-    //               props.propertyNames.forEach(key => {
-    //                 html += `<tr><th>${key}</th><td>${props[key].getValue()}</td></tr>`;
-    //               });
-    //               html += '</table>';
-    //               return html;
-    //             })(entity.properties);
-    //           }
-
-    //         viewer.flyTo(dataSource);
-    //       }).catch(function (error) {
-    //         console.error('載入 GeoJSON 失敗:', error);
-    //       });
-    //     } else {
-    //       viewer.dataSources.add(geojsonDataSource);
-    //     }
-
-    //     repairDataVisible = true;
-    //     this.textContent = "隱藏維修點位";
-    //   } else {
-    //     viewer.dataSources.remove(geojsonDataSource, false);
-    //     repairDataVisible = false;
-    //     this.textContent = "顯示維修點位";
-    //   }
-    // });
-
-
     // 資料選擇邏輯
     const RepairSelect = document.getElementById("RepairSelect");
     RepairSelect.addEventListener("change", function () {
@@ -255,67 +207,84 @@
     });
 
     // 檔案上傳處理
-    document.getElementById("RepairFileInput").addEventListener("change", function (event) {
+    document.getElementById("RepairFileInput").addEventListener("change", function(event) {
       const file = event.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
-      reader.onload = function (e) {
+      reader.onload = function(e) {
         try {
-          const content = e.target.result;
-          const fileName = file.name.replace(/\.[^/.]+$/, ""); // 移除副檔名
+          const geojson = JSON.parse(e.target.result);
+          // 先暫存進 customRepairFiles，不自動立刻顯示
           const fileId = `custom_${Date.now()}`;
-
-          // 只允許 JSON/GeoJSON 檔案
-          const data = JSON.parse(content);
-
-          // 儲存資料
+          const fileName = file.name.replace(/\.[^/.]+$/, "");
           customRepairFiles[fileId] = {
-            id: fileId,
             name: fileName,
-            data: data,
+            data: geojson,
             iconUrl: selectedIconUrl
           };
-
-          // 儲存到記憶體
-          saveDataToMemory(fileId, fileName, data, selectedIconUrl);
-
-          // 添加到選單
+          // 新增到下拉選單
           const option = new Option(fileName, fileId);
           document.getElementById("RepairSelect").appendChild(option);
-
-          // 自動選擇新匯入的資料
           document.getElementById("RepairSelect").value = fileId;
-
-          alert(`檔案 "${fileName}" 匯入成功！`);
-        } catch (error) {
-          console.error('檔案讀取錯誤:', error);
-          alert('檔案格式錯誤或內容無效，請檢查是否為有效的 GeoJSON 檔案！');
+          alert('檔案 "' + fileName + '" 已暫存，點確認匯入才會顯示！');
+        } catch {
+          alert('檔案格式錯誤');
         }
       };
       reader.readAsText(file);
     });
 
     // 確認匯入按鈕事件
+    async function showDataById(id) {
+      removeAllData();
+      if (id === "default") {
+        // fetch 預設檔案
+        try {
+          const data = await fetch('repairdata.geojson').then(r=>r.json());
+          currentDataSource = await Cesium.GeoJsonDataSource.load(data, {clampToGround:true});
+          viewer.dataSources.add(currentDataSource);
+        } catch {
+          alert('預設資料載入失敗！');
+        }
+      } else if (customRepairFiles[id]) {
+        const {data, iconUrl} = customRepairFiles[id];
+        currentDataSource = await Cesium.GeoJsonDataSource.load(data, {clampToGround:true});
+        currentDataSource.entities.values.forEach(entity => {
+          entity.billboard = new Cesium.BillboardGraphics({
+            image: iconUrl, width: 32, height: 32,
+            verticalOrigin: Cesium.VerticalOrigin.CENTER,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+          });
+        });
+        viewer.dataSources.add(currentDataSource);
+      }
+    }
+
+    // 選擇下拉選單的資料後不立即載入，而是等使用者按下「確認按鈕」後才載入選擇的資料
+    let selectedDataId = null;
+
+    document.getElementById("RepairSelect").onchange = function() {
+      selectedDataId = this.value;  // 記錄目前選擇的值
+      // 這裡不載入資料，也不清除資料，等按下確認按鈕
+    };
+
     document.getElementById("confirmImportBtn").addEventListener("click", function () {
-      const selectedValue = document.getElementById("RepairSelect").value;
-      
-      if (!selectedValue) {
+      if (!selectedDataId) {
         alert("請先選擇資料集！");
         return;
       }
 
-      removeRepairData();
+      removeRepairData(); // 清除現有資料
 
-      if (selectedValue === "default") {
-        addRepairData();
-      } else if (customRepairFiles[selectedValue]) {
-        loadCustomRepairData(customRepairFiles[selectedValue]);
+      if (selectedDataId === "default") {
+        addRepairData(); // 載入預設資料
+      } else if (customRepairFiles[selectedDataId]) {
+        loadCustomRepairData(customRepairFiles[selectedDataId]);
       }
 
       alert("資料載入完成！");
     });
-
+    
     // 初始化：載入記憶體中的資料
     loadStoredData();
 
@@ -335,21 +304,6 @@
     function clearAllData() {
     // 1. 移除 RepairData 點位與圖層
     removeRepairData();
-
-    // 2. 移除 3D 建築圖層
-    // for (const city in loadedCityTiles) {
-    //   const tileset = loadedCityTiles[city];
-    //   if (viewer.scene.primitives.contains(tileset)) {
-    //     viewer.scene.primitives.remove(tileset);
-    //   }
-    // }
-    // Object.keys(loadedCityTiles).forEach(city => delete loadedCityTiles[city]);
-
-    // 3. 移除定位圖示
-    // if (typeof userLocationEntity !== "undefined" && userLocationEntity) {
-    //   viewer.entities.remove(userLocationEntity);
-    //   userLocationEntity = null;
-    // }
 
     // 4. 清除 RepairSelect 下拉選單的自訂選項
     const select = document.getElementById("RepairSelect");
@@ -372,16 +326,14 @@
     console.log(" 所有資料已清除，地圖回復初始化狀態");
   }
 
-    // 添加清除按鈕到面板
-    const clearBtn = document.createElement('button');
-    clearBtn.textContent = '清除所有資料';
-    clearBtn.style.cssText = 'margin-top: 5px; width: 100%; background-color: #dc3545; color: white; border: none; padding: 5px; border-radius: 3px; cursor: pointer;';
-    clearBtn.addEventListener('click', function() {
+    // 清除按鈕設定
+    document.getElementById('clearBtn').addEventListener('click', function() {
       if (confirm('確定要清除所有自訂資料嗎？')) {
         clearAllData();
         alert('已清除所有資料！');
       }
     });
+
     document.getElementById("RepairDropdownPanel").appendChild(clearBtn);
 
     // 匯出當前資料功能
