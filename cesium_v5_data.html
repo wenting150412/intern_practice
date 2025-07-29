@@ -86,12 +86,15 @@
     確認匯入
   </button>
 
-  <div id="RepairDropdownPanel" style="position: absolute; top: 25px; left: 10px; z-index: 100;">
+  <div id="RepairDropdownPanel" style="position: absolute; top: 60x; left: 10px; z-index: 100;">
     <select id="RepairSelect" style="width:100%; margin-bottom:5px;">
       <option value="">請選擇資料集</option>
       <option value="default">預設資料</option>
     </select>
   </div>
+  <!-- 新增一個按鈕讓使用者選檔案作為預設資料 -->
+  <label for="DefaultGeojsonInput">選擇預設資料（GeoJSON）</label>
+  <input type="file" id="DefaultGeojsonInput" accept=".json,.geojson" />
 
   <script>
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
@@ -125,15 +128,35 @@
     let selectedIconUrl = "https://cdn-icons-png.flaticon.com/512/3756/3756712.png"; // 預設圖示
 
     function addRepairData() {
-      if (!geojsonDataSource) return;
-      viewer.dataSources.add(geojsonDataSource);
-      repairDataVisible = true;
+      fetch('repairdata.geojson')
+        .then(response => response.json())
+        .then(function(data) {
+          window.defaultGeojson = data;
+          Cesium.GeoJsonDataSource.load(window.defaultGeojson, { clampToGround: true })
+            .then(function(dataSource) {
+              viewer.dataSources.add(dataSource);
+              repairDataVisible = true;
+            });
+        })
+        .catch(e => {
+          alert('預設資料載入失敗，請檢查 default-repair.geojson 是否存在於網站目錄！');
+        });
     }
 
     function removeRepairData() {
       viewer.entities.removeAll();
       RepairEntities = [];
     }
+
+    RepairSelect.addEventListener("change", function () {
+      const selected = this.value;
+      removeRepairData();
+      if (selected === "default") {
+        addRepairData();  // 現在才會fetch並載入
+      } else if (customRepairFiles[selected]) {
+        loadCustomRepairData(customRepairFiles[selected]);
+      }
+    });
 
     async function loadCustomRepairData(fileData) {
       const dataSource = await Cesium.GeoJsonDataSource.load(fileData.data, { clampToGround: true });
@@ -593,9 +616,9 @@
     // 初始化完成提示
     console.log('Cesium 維修資料系統初始化完成！');
     console.log('快捷鍵：');
-    console.log('  Ctrl + H: 回到台灣視角');
-    console.log('  Ctrl + C: 清除所有資料');
-    console.log('  Ctrl + F: 飛到資料位置');
+    console.log('Ctrl + H: 回到台灣視角');
+    console.log('Ctrl + C: 清除所有資料');
+    console.log('Ctrl + F: 飛到資料位置');
 
     // 滑鼠移動顯示 label
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
