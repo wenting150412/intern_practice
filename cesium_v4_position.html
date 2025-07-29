@@ -188,24 +188,45 @@
                 // });
 
                 // 紅點標記 (pixel point)
+                // userPoint = viewer.entities.add({
+                //     position: Cesium.Cartesian3.fromDegrees(lon, lat),
+                //     point: {
+                //         pixelSize: 20,   // 初始大小
+                //         color: Cesium.Color.RED,
+                //         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                //     }
+                // });
+
+                // viewer.scene.camera.changed.addEventListener(() => {
+                //     if (!userPoint) return;
+
+                //     const cameraHeight = viewer.scene.camera.positionCartographic.height;
+                //     // 鏡頭越近，點越小；鏡頭越遠，點越大
+                //     const newSize = Math.max(1, 10000 / cameraHeight);
+                //     userPoint.point.pixelSize = newSize;
+                // });
+
                 userPoint = viewer.entities.add({
-                    position: Cesium.Cartesian3.fromDegrees(lon, lat),
+                    position: Cesium.Cartesian3.fromDegrees(lon, lat), // lon, lat 應替換為您的實際經緯度
                     point: {
-                        pixelSize: 20,   // 初始大小
+                        // 使用 Cesium.NearFarScalar 讓點位大小依照與相機距離自動調整
+                        // 參數說明：
+                        // Near Distance (近距離閾值) : 1000.0 公尺
+                        // Near Value (近距離時的像素大小) : 2.0 像素
+                        // Far Distance (遠距離閾值) : 8000000.0 公尺 (8000 公里)
+                        // Far Value (遠距離時的像素大小) : 20.0 像素
+                        //
+                        // 這表示：
+                        // - 當相機距離點位 <= 1000 公尺時，點位固定為 2 像素 (看起來較小)
+                        // - 當相機距離點位 >= 8000 公里時，點位固定為 20 像素 (看起來較大)
+                        // - 在 1000 公尺到 8000 公里之間，點位大小會從 2 像素平滑地變為 20 像素
+                        pixelSize: new Cesium.NearFarScalar(1.0e3, 2.0, 8.0e6, 20.0),
                         color: Cesium.Color.RED,
+                        outlineColor: Cesium.Color.WHITE, // 可以加上外框讓點更明顯
+                        outlineWidth: 1,
                         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
                     }
                 });
-
-                viewer.scene.camera.changed.addEventListener(() => {
-                    if (!userPoint) return;
-
-                    const cameraHeight = viewer.scene.camera.positionCartographic.height;
-                    // 鏡頭越近，點越小；鏡頭越遠，點越大
-                    const newSize = Math.max(1, 10000 / cameraHeight);
-                    userPoint.point.pixelSize = newSize;
-                });
-
 
                 console.log("載入的縣市 tileset:", cityKey);
             });
