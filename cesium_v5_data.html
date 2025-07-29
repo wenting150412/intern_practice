@@ -145,18 +145,9 @@
 
     function removeRepairData() {
       viewer.entities.removeAll();
+      viewer.dataSources.removeAll();
       RepairEntities = [];
     }
-
-    RepairSelect.addEventListener("change", function () {
-      const selected = this.value;
-      removeRepairData();
-      if (selected === "default") {
-        addRepairData();  // 現在才會fetch並載入
-      } else if (customRepairFiles[selected]) {
-        loadCustomRepairData(customRepairFiles[selected]);
-      }
-    });
 
     async function loadCustomRepairData(fileData) {
       const dataSource = await Cesium.GeoJsonDataSource.load(fileData.data, { clampToGround: true });
