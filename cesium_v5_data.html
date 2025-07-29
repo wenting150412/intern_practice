@@ -40,61 +40,53 @@
 
 <body>
   <div id="cesiumContainer"></div>
-  <button id="toggleRepairBtn">顯示維修點位</button>
-   
-  <!-- 檔案上傳 -->
-  <input 
-    type="file" 
-    id="RepairFileInput" 
-    accept=".json,.geojson" 
-    style="margin-top: 10px; width: 100%;" 
-  />
 
-  <!-- 圖示選擇 -->
-  <div id="iconChooser" style="margin-top: 10px;">
-    <strong style="font-size: 14px;">選擇圖示：</strong>
-    <div style="display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
-      <img 
-        src="https://cdn-icons-png.flaticon.com/512/3756/3756712.png" 
-        class="icon-option" 
-        data-url="https://cdn-icons-png.flaticon.com/512/3756/3756712.png" 
-        width="32" 
-        style="cursor:pointer; border: 2px solid #007BFF;" 
-      />
-      <img 
-        src="https://cdn-icons-png.flaticon.com/512/684/684908.png" 
-        class="icon-option" 
-        data-url="https://cdn-icons-png.flaticon.com/512/684/684908.png" 
-        width="32" 
-        style="cursor:pointer; border: 2px solid transparent;" 
-      />
-      <img 
-        src="https://cdn-icons-png.flaticon.com/512/1483/1483336.png" 
-        class="icon-option" 
-        data-url="https://cdn-icons-png.flaticon.com/512/1483/1483336.png" 
-        width="32" 
-        style="cursor:pointer; border: 2px solid transparent;" 
-      />
+  <!-- 左上角控制面板 -->
+  <div id="controlPanel" style="
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 5px;
+      width: 200px;
+      font-size: 14px;
+  ">
+    <!-- 切換維修點位 -->
+    <button id="toggleRepairBtn" style="width: 100%; margin-bottom: 5px;">顯示維修點位</button>
+
+    <!-- 檔案上傳 -->
+    <label for="RepairFileInput">上傳資料集</label>
+    <input type="file" id="RepairFileInput" accept=".json,.geojson" style="width: 100%; margin-bottom: 5px;" />
+
+    <!-- 圖示選擇 -->
+    <div id="iconChooser" style="margin-bottom: 5px;">
+      <strong>選擇圖示：</strong>
+      <div style="display: flex; gap: 4px; margin-top: 4px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/3756/3756712.png" 
+             class="icon-option" data-url="https://cdn-icons-png.flaticon.com/512/3756/3756712.png" width="24" />
+        <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" 
+             class="icon-option" data-url="https://cdn-icons-png.flaticon.com/512/684/684908.png" width="24" />
+        <img src="https://cdn-icons-png.flaticon.com/512/1483/1483336.png" 
+             class="icon-option" data-url="https://cdn-icons-png.flaticon.com/512/1483/1483336.png" width="24" />
+      </div>
     </div>
-  </div>
 
-  <!-- 確認按鈕 -->
-  <button 
-    id="confirmImportBtn" 
-    style="margin-top: 10px; width: 100%;"
-  >
-    確認匯入
-  </button>
+    <!-- 確認匯入 -->
+    <button id="confirmImportBtn" style="width: 100%; margin-bottom: 5px;">確認匯入</button>
 
-  <div id="RepairDropdownPanel" style="position: absolute; top: 60px; left: 10px; z-index: 100;">
-    <select id="RepairSelect" style="width:100%; margin-bottom:5px;">
+    <!-- 下拉選單 -->
+    <select id="RepairSelect" style="width: 100%; margin-bottom: 5px;">
       <option value="">請選擇資料集</option>
       <option value="default">預設資料</option>
     </select>
+
+    <!-- 預設資料上傳 -->
+    <label for="DefaultGeojsonInput">選擇預設資料</label>
+    <input type="file" id="DefaultGeojsonInput" accept=".json,.geojson" style="width: 100%;" />
   </div>
-  <!-- 新增一個按鈕讓使用者選檔案作為預設資料 -->
-  <label for="DefaultGeojsonInput">選擇預設資料（GeoJSON）</label>
-  <input type="file" id="DefaultGeojsonInput" accept=".json,.geojson" />
+</body>
 
   <script>
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
@@ -261,58 +253,6 @@
         img.style.border = "2px solid #007BFF";
       });
     });
-
-    // // 處理 JS 檔案的執行
-    // function executeJSFile(content, iconUrl, id, name) {
-    //   try {
-    //     // 創建一個沙盒環境來執行 JS 代碼
-    //     const sandbox = {
-    //       RepairData: undefined,
-    //       data: undefined
-    //     };
-        
-    //     // 使用 Function 構造函數來執行代碼，而不是 eval
-    //     const func = new Function('sandbox', `
-    //       ${content}
-    //       // 嘗試找到資料變數
-    //       if (typeof RepairData !== 'undefined') {
-    //         sandbox.RepairData = RepairData;
-    //       } else if (typeof data !== 'undefined') {
-    //         sandbox.data = data;
-    //       }
-    //     `);
-        
-    //     func(sandbox);
-        
-    //     // 取得資料
-    //     const jsData = sandbox.RepairData || sandbox.data;
-        
-    //     if (jsData) {
-    //       // 儲存資料
-    //       customRepairFiles[id] = { 
-    //         id, 
-    //         name, 
-    //         data: jsData, 
-    //         iconUrl: iconUrl 
-    //       };
-          
-    //       // 儲存到記憶體
-    //       saveDataToMemory(id, name, jsData, iconUrl);
-          
-    //       // 立即載入資料
-    //       removeRepairData();
-    //       loadCustomRepairData(customRepairFiles[id]);
-          
-    //       return true;
-    //     } else {
-    //       throw new Error("JS 檔案中未找到 RepairData 或 data 變數！");
-    //     }
-    //   } catch (error) {
-    //     console.error('JS 檔案執行錯誤:', error);
-    //     alert("JS 檔案執行失敗：" + error.message);
-    //     return false;
-    //   }
-    // }
 
     // 檔案上傳處理
     document.getElementById("RepairFileInput").addEventListener("change", function (event) {
