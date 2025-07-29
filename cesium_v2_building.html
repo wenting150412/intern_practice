@@ -50,7 +50,7 @@
     let buildingTileset;
 
     // 初始化 3d tiles
-    Cesium.Cesium3DTileset.fromUrl(
+    const tileset = await Cesium.Cesium3DTileset.fromUrl(
       "https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json", {
         modelMatrix: modelTransform,
         maximumScreenSpaceError: 16,
@@ -59,13 +59,16 @@
     buildingTileset = tileset;
     viewer.scene.primitives.add(buildingTileset);
 
+    const lon = config.lon, lat = config.lat;
     const boundingSphere = tileset.boundingSphere;
     const cartographic = Cesium.Cartographic.fromCartesian(boundingSphere.center);
     const surface = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 0.0);
-    const offset = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 20); // 向上 20 公尺
+    const offset = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, config.height); // 向上 20 公尺
     const translation = Cesium.Cartesian3.subtract(offset, surface, new Cesium.Cartesian3());
     tileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
     viewer.zoomTo(tileset);
+
+    viewer.scene.primitives.add(tileset);
 
     // viewer.flyTo(buildingTileset);
     console.log("3D Tiles Model loaded successfully!");
