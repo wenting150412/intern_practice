@@ -13,7 +13,7 @@
       padding: 0;
       overflow: hidden;
     }
-    #toggleLayerBtn {
+    /* #toggleLayerBtn {
       position: absolute;
       top: 10px;
       left: 10px;
@@ -23,7 +23,7 @@
       padding: 10px;
       border-radius: 5px;
       cursor: pointer;
-    }
+    } */
     #toggleRepairBtn {
       position: absolute;
       top: 10px;
@@ -37,9 +37,61 @@
     }
   </style>
 </head>
+
 <body>
   <div id="cesiumContainer"></div>
   <button id="toggleRepairBtn">顯示維修點位</button>
+   
+  <!-- 檔案上傳 -->
+  <input 
+    type="file" 
+    id="RepairFileInput" 
+    accept=".json,.geojson" 
+    style="margin-top: 10px; width: 100%;" 
+  />
+
+  <!-- 圖示選擇 -->
+  <div id="iconChooser" style="margin-top: 10px;">
+    <strong style="font-size: 14px;">選擇圖示：</strong>
+    <div style="display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
+      <img 
+        src="https://cdn-icons-png.flaticon.com/512/3756/3756712.png" 
+        class="icon-option" 
+        data-url="https://cdn-icons-png.flaticon.com/512/3756/3756712.png" 
+        width="32" 
+        style="cursor:pointer; border: 2px solid #007BFF;" 
+      />
+      <img 
+        src="https://cdn-icons-png.flaticon.com/512/684/684908.png" 
+        class="icon-option" 
+        data-url="https://cdn-icons-png.flaticon.com/512/684/684908.png" 
+        width="32" 
+        style="cursor:pointer; border: 2px solid transparent;" 
+      />
+      <img 
+        src="https://cdn-icons-png.flaticon.com/512/1483/1483336.png" 
+        class="icon-option" 
+        data-url="https://cdn-icons-png.flaticon.com/512/1483/1483336.png" 
+        width="32" 
+        style="cursor:pointer; border: 2px solid transparent;" 
+      />
+    </div>
+  </div>
+
+  <!-- 確認按鈕 -->
+  <button 
+    id="confirmImportBtn" 
+    style="margin-top: 10px; width: 100%;"
+  >
+    確認匯入
+  </button>
+
+  <div id="RepairDropdownPanel" style="position: absolute; top: 100px; left: 300px; z-index: 100;">
+    <select id="RepairSelect" style="width:100%; margin-bottom:5px;">
+      <option value="">請選擇資料集</option>
+      <option value="default">預設資料</option>
+    </select>
+  </div>
 
   <script>
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
@@ -68,6 +120,55 @@
 
     let geojsonDataSource = null;
     let repairDataVisible = false;
+    let customRepairFiles = {};
+    let RepairEntities = [];
+    let selectedIconUrl = "https://cdn-icons-png.flaticon.com/512/3756/3756712.png"; // 預設圖示
+
+    function addRepairData() {
+      if (!geojsonDataSource) return;
+      viewer.dataSources.add(geojsonDataSource);
+      repairDataVisible = true;
+    }
+
+    function removeRepairData() {
+      viewer.entities.removeAll();
+      RepairEntities = [];
+    }
+
+    async function loadCustomRepairData(fileData) {
+      const dataSource = await Cesium.GeoJsonDataSource.load(fileData.data, { clampToGround: true });
+      viewer.dataSources.add(dataSource);
+
+      // 修改圖示
+      dataSource.entities.values.forEach(entity => {
+        entity.billboard = new Cesium.BillboardGraphics({
+          image: fileData.iconUrl,
+          width: 32,
+          height: 32,
+          verticalOrigin: Cesium.VerticalOrigin.CENTER,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+        });
+      });
+
+      fileData.dataSource = dataSource;
+      RepairEntities = Array.from(dataSource.entities.values);
+    }
+
+    function saveDataToMemory(id, name, data, iconUrl) {
+      if (!window.storedRepairData) window.storedRepairData = {};
+      window.storedRepairData[id] = { name, data, iconUrl };
+    }
+
+    function loadStoredData() {
+      if (window.storedRepairData) {
+        for (const id in window.storedRepairData) {
+          const stored = window.storedRepairData[id];
+          customRepairFiles[id] = stored;
+          const option = new Option(stored.name, id);
+          document.getElementById("RepairSelect").appendChild(option);
+        }
+      }
+    }
 
     document.getElementById("toggleRepairBtn").addEventListener("click", function () {
       if (!repairDataVisible) {
@@ -123,6 +224,378 @@
         this.textContent = "顯示維修點位";
       }
     });
+
+
+    // 資料選擇邏輯
+    const RepairSelect = document.getElementById("RepairSelect");
+    RepairSelect.addEventListener("change", function () {
+      const selected = this.value;
+      removeRepairData();
+
+      if (selected === "default") {
+        addRepairData();
+      } else if (customRepairFiles[selected]) {
+        loadCustomRepairData(customRepairFiles[selected]);
+      }
+    });
+
+    // 圖示選擇邏輯
+    document.querySelectorAll(".icon-option").forEach(img => {
+      img.addEventListener("click", () => {
+        selectedIconUrl = img.dataset.url;
+        document.querySelectorAll(".icon-option").forEach(i => i.style.border = "2px solid transparent");
+        img.style.border = "2px solid #007BFF";
+      });
+    });
+
+    // // 處理 JS 檔案的執行
+    // function executeJSFile(content, iconUrl, id, name) {
+    //   try {
+    //     // 創建一個沙盒環境來執行 JS 代碼
+    //     const sandbox = {
+    //       RepairData: undefined,
+    //       data: undefined
+    //     };
+        
+    //     // 使用 Function 構造函數來執行代碼，而不是 eval
+    //     const func = new Function('sandbox', `
+    //       ${content}
+    //       // 嘗試找到資料變數
+    //       if (typeof RepairData !== 'undefined') {
+    //         sandbox.RepairData = RepairData;
+    //       } else if (typeof data !== 'undefined') {
+    //         sandbox.data = data;
+    //       }
+    //     `);
+        
+    //     func(sandbox);
+        
+    //     // 取得資料
+    //     const jsData = sandbox.RepairData || sandbox.data;
+        
+    //     if (jsData) {
+    //       // 儲存資料
+    //       customRepairFiles[id] = { 
+    //         id, 
+    //         name, 
+    //         data: jsData, 
+    //         iconUrl: iconUrl 
+    //       };
+          
+    //       // 儲存到記憶體
+    //       saveDataToMemory(id, name, jsData, iconUrl);
+          
+    //       // 立即載入資料
+    //       removeRepairData();
+    //       loadCustomRepairData(customRepairFiles[id]);
+          
+    //       return true;
+    //     } else {
+    //       throw new Error("JS 檔案中未找到 RepairData 或 data 變數！");
+    //     }
+    //   } catch (error) {
+    //     console.error('JS 檔案執行錯誤:', error);
+    //     alert("JS 檔案執行失敗：" + error.message);
+    //     return false;
+    //   }
+    // }
+
+    // 檔案上傳處理
+    document.getElementById("RepairFileInput").addEventListener("change", function (event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const content = e.target.result;
+          const fileName = file.name.replace(/\.[^/.]+$/, ""); // 移除副檔名
+          const fileId = `custom_${Date.now()}`;
+
+          // 只允許 JSON/GeoJSON 檔案
+          const data = JSON.parse(content);
+
+          // 儲存資料
+          customRepairFiles[fileId] = {
+            id: fileId,
+            name: fileName,
+            data: data,
+            iconUrl: selectedIconUrl
+          };
+
+          // 儲存到記憶體
+          saveDataToMemory(fileId, fileName, data, selectedIconUrl);
+
+          // 添加到選單
+          const option = new Option(fileName, fileId);
+          document.getElementById("RepairSelect").appendChild(option);
+
+          // 自動選擇新匯入的資料
+          document.getElementById("RepairSelect").value = fileId;
+
+          alert(`檔案 "${fileName}" 匯入成功！`);
+        } catch (error) {
+          console.error('檔案讀取錯誤:', error);
+          alert('檔案格式錯誤或內容無效，請檢查是否為有效的 GeoJSON 檔案！');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // 確認匯入按鈕事件
+    document.getElementById("confirmImportBtn").addEventListener("click", function () {
+      const selectedValue = document.getElementById("RepairSelect").value;
+      
+      if (!selectedValue) {
+        alert("請先選擇資料集！");
+        return;
+      }
+
+      removeRepairData();
+
+      if (selectedValue === "default") {
+        addRepairData();
+      } else if (customRepairFiles[selectedValue]) {
+        loadCustomRepairData(customRepairFiles[selectedValue]);
+      }
+
+      alert("資料載入完成！");
+    });
+
+    // 初始化：載入記憶體中的資料
+    loadStoredData();
+
+    // 地圖點擊事件處理
+    viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(function (click) {
+      const picked = viewer.scene.pick(click.position);
+      if (Cesium.defined(picked) && picked.id) {
+        const entity = picked.id;
+        if (entity.description) {
+          // 顯示詳細資訊視窗
+          viewer.selectedEntity = entity;
+        }
+      }
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    // 清除資料功能
+    function clearAllData() {
+    // 1. 移除 RepairData 點位與圖層
+    removeRepairData();
+
+    // 2. 移除 3D 建築圖層
+    // for (const city in loadedCityTiles) {
+    //   const tileset = loadedCityTiles[city];
+    //   if (viewer.scene.primitives.contains(tileset)) {
+    //     viewer.scene.primitives.remove(tileset);
+    //   }
+    // }
+    // Object.keys(loadedCityTiles).forEach(city => delete loadedCityTiles[city]);
+
+    // 3. 移除定位圖示
+    // if (typeof userLocationEntity !== "undefined" && userLocationEntity) {
+    //   viewer.entities.remove(userLocationEntity);
+    //   userLocationEntity = null;
+    // }
+
+    // 4. 清除 RepairSelect 下拉選單的自訂選項
+    const select = document.getElementById("RepairSelect");
+    const options = select.querySelectorAll("option");
+    options.forEach(option => {
+      if (option.value !== "" && option.value !== "default") {
+        option.remove();
+      }
+    });
+
+    // 5. 清除記憶體資料
+    Object.keys(customRepairFiles).forEach(key => delete customRepairFiles[key]);
+    if (window.storedRepairData) {
+      Object.keys(window.storedRepairData).forEach(key => delete window.storedRepairData[key]);
+    }
+
+    // 6. 重置下拉選單選擇
+    select.value = "";
+
+    console.log(" 所有資料已清除，地圖回復初始化狀態");
+  }
+
+    // 添加清除按鈕到面板
+    const clearBtn = document.createElement('button');
+    clearBtn.textContent = '清除所有資料';
+    clearBtn.style.cssText = 'margin-top: 5px; width: 100%; background-color: #dc3545; color: white; border: none; padding: 5px; border-radius: 3px; cursor: pointer;';
+    clearBtn.addEventListener('click', function() {
+      if (confirm('確定要清除所有自訂資料嗎？')) {
+        clearAllData();
+        alert('已清除所有資料！');
+      }
+    });
+    document.getElementById("RepairDropdownPanel").appendChild(clearBtn);
+
+    // 匯出當前資料功能
+    function exportCurrentData() {
+      const selectedValue = document.getElementById("RepairSelect").value;
+      
+      if (!selectedValue || selectedValue === "") {
+        alert("請先選擇資料集！");
+        return;
+      }
+
+      let dataToExport;
+      let fileName;
+
+      if (selectedValue === "default") {
+        // 如果需要匯出預設資料，這裡可以添加邏輯
+        alert("預設資料集無法匯出！");
+        return;
+      } else if (customRepairFiles[selectedValue]) {
+        dataToExport = customRepairFiles[selectedValue].data;
+        fileName = `${customRepairFiles[selectedValue].name}_export.json`;
+      } else {
+        alert("找不到選擇的資料集！");
+        return;
+      }
+
+      // 創建下載連結
+      const dataStr = JSON.stringify(dataToExport, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', fileName);
+      linkElement.click();
+    }
+
+    // 添加匯出按鈕
+    const exportBtn = document.createElement('button');
+    exportBtn.textContent = '匯出當前資料';
+    exportBtn.style.cssText = 'margin-top: 5px; width: 100%; background-color: #28a745; color: white; border: none; padding: 5px; border-radius: 3px; cursor: pointer;';
+    exportBtn.addEventListener('click', exportCurrentData);
+    document.getElementById("RepairDropdownPanel").appendChild(exportBtn);
+
+    // 統計資訊顯示
+    function updateStatistics() {
+      const totalCustomFiles = Object.keys(customRepairFiles).length;
+      const totalEntities = RepairEntities.length;
+      const totalDataSources = viewer.dataSources.length;
+      
+      // 更新或創建統計資訊顯示元素
+      let statsDiv = document.getElementById('statsInfo');
+      if (!statsDiv) {
+        statsDiv = document.createElement('div');
+        statsDiv.id = 'statsInfo';
+        statsDiv.style.cssText = 'margin-top: 10px; font-size: 12px; color: #666; border-top: 1px solid #ccc; padding-top: 5px;';
+        document.getElementById("RepairDropdownPanel").appendChild(statsDiv);
+      }
+      
+      statsDiv.innerHTML = `
+        <div>自訂檔案：${totalCustomFiles} 個</div>
+        <div>實體數量：${totalEntities} 個</div>
+        <div>資料源：${totalDataSources} 個</div>
+      `;
+    }
+
+    // 定期更新統計資訊
+    setInterval(updateStatistics, 2000);
+
+    // 視角控制優化
+    function flyToData() {
+      const selectedValue = document.getElementById("RepairSelect").value;
+      
+      if (selectedValue && customRepairFiles[selectedValue] && customRepairFiles[selectedValue].dataSource) {
+        viewer.flyTo(customRepairFiles[selectedValue].dataSource);
+      } else if (RepairEntities.length > 0) {
+        // 飛到所有實體的包圍盒
+        viewer.flyTo(viewer.entities);
+      } else {
+        // 回到台灣視角
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(120.65, 24.15, 1000000),
+          orientation: {
+            heading: Cesium.Math.toRadians(0),
+            pitch: Cesium.Math.toRadians(-90),
+            roll: 0
+          }
+        });
+      }
+    }
+
+    // 添加飛到資料按鈕
+    const flyToBtn = document.createElement('button');
+    flyToBtn.textContent = '飛到資料位置';
+    flyToBtn.style.cssText = 'margin-top: 5px; width: 100%; background-color: #17a2b8; color: white; border: none; padding: 5px; border-radius: 3px; cursor: pointer;';
+    flyToBtn.addEventListener('click', flyToData);
+    document.getElementById("RepairDropdownPanel").appendChild(flyToBtn);
+
+    // 鍵盤快捷鍵
+    document.addEventListener('keydown', function(event) {
+      // Ctrl + H: 回到台灣視角
+      if (event.ctrlKey && event.key === 'h') {
+        event.preventDefault();
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(120.65, 24.15, 1000000),
+          orientation: {
+            heading: Cesium.Math.toRadians(0),
+            pitch: Cesium.Math.toRadians(-90),
+            roll: 0
+          }
+        });
+      }
+      
+      // Ctrl + C: 清除所有資料
+      if (event.ctrlKey && event.key === 'c') {
+        event.preventDefault();
+        if (confirm('確定要清除所有自訂資料嗎？')) {
+          clearAllData();
+        }
+      }
+      // Ctrl + F: 飛到資料位置
+      if (event.ctrlKey && event.key === 'f') {
+        event.preventDefault();
+        flyToData();
+            }
+        });
+
+    // 錯誤處理和日誌記錄
+    window.addEventListener('error', function(event) {
+      console.error('全域錯誤:', event.error);
+    });
+
+    // 顯示載入進度
+    function showLoadingProgress(message) {
+      let progressDiv = document.getElementById('loadingProgress');
+      if (!progressDiv) {
+        progressDiv = document.createElement('div');
+        progressDiv.id = 'loadingProgress';
+        progressDiv.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(0,0,0,0.8);
+          color: white;
+          padding: 20px;
+          border-radius: 5px;
+          z-index: 1000;
+          font-size: 16px;
+        `;
+        document.body.appendChild(progressDiv);
+      }
+      progressDiv.textContent = message;
+      progressDiv.style.display = 'block';
+    }
+
+    function hideLoadingProgress() {
+      const progressDiv = document.getElementById('loadingProgress');
+      if (progressDiv) {
+        progressDiv.style.display = 'none';
+      }
+    }
+
+    // 初始化完成提示
+    console.log('Cesium 維修資料系統初始化完成！');
+    console.log('快捷鍵：');
+    console.log('  Ctrl + H: 回到台灣視角');
+    console.log('  Ctrl + C: 清除所有資料');
+    console.log('  Ctrl + F: 飛到資料位置');
 
     // 滑鼠移動顯示 label
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
