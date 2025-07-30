@@ -214,20 +214,42 @@
         list.appendChild(li);
       }
     }
+    // function showDataset(id) {
+    //   if(currentDatasetId && datasets[currentDatasetId]) {
+    //     viewer.dataSources.remove(datasets[currentDatasetId].dataSource);
+    //   }
+    //   currentDatasetId = id;
+    //   viewer.dataSources.add(datasets[id].dataSource);
+    // }
+
     function showDataset(id) {
-      if(currentDatasetId && datasets[currentDatasetId]) {
-        viewer.dataSources.remove(datasets[currentDatasetId].dataSource);
+      // 1. 清掉 map 上（如果有）的資料集
+      if (currentDataSource) {
+        viewer.dataSources.remove(currentDataSource);
       }
-      currentDatasetId = id;
-      viewer.dataSources.add(datasets[id].dataSource);
+      // 2. 把這一筆 dataSource 新增進 map
+      currentDataSource = datasets[id].dataSource;
+      viewer.dataSources.add(currentDataSource);
     }
+
+    // function removeDataset(id) {
+    //   if(currentDatasetId === id) {
+    //     viewer.dataSources.remove(datasets[id].dataSource);
+    //     currentDatasetId = null;
+    //   }
+    //   delete datasets[id];
+    //   updateDatasetsList();
+    // }
+
     function removeDataset(id) {
-      if(currentDatasetId === id) {
-        viewer.dataSources.remove(datasets[id].dataSource);
-        currentDatasetId = null;
+      if (datasets[id]) {
+        if (datasets[id].dataSource === currentDataSource) {
+          viewer.dataSources.remove(currentDataSource);
+          currentDataSource = null;
+        }
+        delete datasets[id];
+        updateDatasetsList();
       }
-      delete datasets[id];
-      updateDatasetsList();
     }
 
     // 5. 清除所有
@@ -240,7 +262,7 @@
         updateDatasetsList();
       }
     };
-    
+
     // 初始化：載入記憶體中的資料
     loadStoredData();
 
