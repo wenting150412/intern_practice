@@ -71,17 +71,16 @@
   </div>
 
   <!-- 確認匯入 -->
-  <button id="confirmImportBtn" style="width: 100%; margin-bottom: 5px;">確認匯入</button>
-
+ <button id="confirmImportBtn" style="width:100%">確認匯入</button>
   <!-- 下拉選單 -->
-  <select id="RepairSelect" style="width: 100%; margin-bottom: 5px;">
-    <option value="">請選擇資料集</option>
-    <option value="default">預設資料</option>
-  </select>
+  <div>
+    <strong>已匯入資料集：</strong>
+    <ul id="datasetsList" style="padding-left:20px;"></ul>
+  </div>
 
   <!-- 預設資料上傳 -->
-  <label for="DefaultGeojsonInput">選擇預設資料</label>
-  <input type="file" id="DefaultGeojsonInput" accept=".json,.geojson" style="width: 100%;" />
+  <!-- <label for"="DefaultGeojsonInput">選擇預設資料</label>
+  <input type=file" id="DefaultGeojsonInput" accept=".json,.geojson" style="width: 100%;" /> -->
   </div>
 
   <!-- 清除所有資料 -->
@@ -114,6 +113,9 @@
     );
     emapWmtsLayer.show = true;
 
+    let pendingGeojson = null;
+    let pendingName = '';
+    let datasets = {}; // 存放 {id, name, data, iconUrl, dataSource}
     let geojsonDataSource = null;
     let repairDataVisible = false;
     let customRepairFiles = {};
@@ -121,169 +123,123 @@
     let currentDataSource = null; // 目前顯示中的Cesium.DataSource
     let selectedIconUrl = "https://cdn-icons-png.flaticon.com/512/3756/3756712.png"; // 預設圖示
 
-    function addRepairData() {
-      fetch('repairdata.geojson')
-        .then(response => response.json())
-        .then(function(data) {
-          window.defaultGeojson = data;
-          Cesium.GeoJsonDataSource.load(window.defaultGeojson, { clampToGround: true })
-            .then(function(dataSource) {
-              viewer.dataSources.add(dataSource);
-              repairDataVisible = true;
-            });
-        })
-        .catch(e => {
-          alert('預設資料載入失敗，請檢查 default-repair.geojson 是否存在於網站目錄！');
-        });
-    }
-
-    function removeAllData() {
-      if (currentDataSource) viewer.dataSources.remove(currentDataSource, true);
-      currentDataSource = null;
-      RepairEntities.length = 0;
-
-      // 清除下拉選單只有預設那兩欄
-      const RepairSelect = document.getElementById("RepairSelect");
-      RepairSelect.options.length = 2;
-      Object.keys(customRepairFiles).forEach(k => delete customRepairFiles[k]);
-    }
-    document.getElementById("clearBtn").onclick = removeAllData;
-
-    async function loadCustomRepairData(fileData) {
-      const dataSource = await Cesium.GeoJsonDataSource.load(fileData.data, { clampToGround: true });
-      viewer.dataSources.add(dataSource);
-
-      // 修改圖示
-      dataSource.entities.values.forEach(entity => {
-        entity.billboard = new Cesium.BillboardGraphics({
-          image: fileData.iconUrl,
-          width: 32,
-          height: 32,
-          verticalOrigin: Cesium.VerticalOrigin.CENTER,
-          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-        });
-      });
-
-      fileData.dataSource = dataSource;
-      RepairEntities = Array.from(dataSource.entities.values);
-    }
-
-    function saveDataToMemory(id, name, data, iconUrl) {
-      if (!window.storedRepairData) window.storedRepairData = {};
-      window.storedRepairData[id] = { name, data, iconUrl };
-    }
-
-    function loadStoredData() {
-      if (window.storedRepairData) {
-        for (const id in window.storedRepairData) {
-          const stored = window.storedRepairData[id];
-          customRepairFiles[id] = stored;
-          const option = new Option(stored.name, id);
-          document.getElementById("RepairSelect").appendChild(option);
-        }
-      }
-    }
-
-    // 資料選擇邏輯
-    const RepairSelect = document.getElementById("RepairSelect");
-    RepairSelect.addEventListener("change", function () {
-      const selected = this.value;
-      removeRepairData();
-
-      if (selected === "default") {
-        addRepairData();
-      } else if (customRepairFiles[selected]) {
-        loadCustomRepairData(customRepairFiles[selected]);
-      }
-    });
-
-    // 圖示選擇邏輯
+    // 1. 處理 icon 選擇
     document.querySelectorAll(".icon-option").forEach(img => {
-      img.addEventListener("click", () => {
+      img.onclick = function() {
         selectedIconUrl = img.dataset.url;
         document.querySelectorAll(".icon-option").forEach(i => i.style.border = "2px solid transparent");
         img.style.border = "2px solid #007BFF";
-      });
+      }
     });
+    // 預設選第一個圖示
+    document.querySelector(".icon-option").click();
 
-    // 檔案上傳處理
+    // 2. 處理檔案上傳（只讀進 pending，不進資料集）
     document.getElementById("RepairFileInput").addEventListener("change", function(event) {
       const file = event.target.files[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
-          const geojson = JSON.parse(e.target.result);
-          // 先暫存進 customRepairFiles，不自動立刻顯示
-          const fileId = `custom_${Date.now()}`;
-          const fileName = file.name.replace(/\.[^/.]+$/, "");
-          customRepairFiles[fileId] = {
-            name: fileName,
-            data: geojson,
-            iconUrl: selectedIconUrl
-          };
-          // 新增到下拉選單
-          const option = new Option(fileName, fileId);
-          document.getElementById("RepairSelect").appendChild(option);
-          document.getElementById("RepairSelect").value = fileId;
-          alert('檔案 "' + fileName + '" 已暫存，點確認匯入才會顯示！');
+          pendingGeojson = JSON.parse(e.target.result);
+          pendingName = file.name.replace(/\.[^/.]+$/, "");
+          alert('檔案 "' + pendingName + '" 已暫存，可選圖示後點確認匯入。');
         } catch {
           alert('檔案格式錯誤');
+          pendingGeojson = null;
+          pendingName = '';
         }
       };
       reader.readAsText(file);
     });
 
-    // 確認匯入按鈕事件
-    async function showDataById(id) {
-      removeAllData();
-      if (id === "default") {
-        // fetch 預設檔案
-        try {
-          const data = await fetch('repairdata.geojson').then(r=>r.json());
-          currentDataSource = await Cesium.GeoJsonDataSource.load(data, {clampToGround:true});
-          viewer.dataSources.add(currentDataSource);
-        } catch {
-          alert('預設資料載入失敗！');
-        }
-      } else if (customRepairFiles[id]) {
-        const {data, iconUrl} = customRepairFiles[id];
-        currentDataSource = await Cesium.GeoJsonDataSource.load(data, {clampToGround:true});
-        currentDataSource.entities.values.forEach(entity => {
+    // 3. 點擊確認匯入，兩者都選才執行
+    document.getElementById("confirmImportBtn").onclick = async function() {
+      if (!pendingGeojson) {
+        alert("請先上傳資料集！");
+        return;
+      }
+      if (!selectedIconUrl) {
+        alert("請先選擇圖示！");
+        return;
+      }
+      const dsId = `ds_${Date.now()}`;
+      try {
+        const dataSource = await Cesium.GeoJsonDataSource.load(pendingGeojson, { clampToGround: true });
+        // 設定圖示
+        dataSource.entities.values.forEach(entity => {
           entity.billboard = new Cesium.BillboardGraphics({
-            image: iconUrl, width: 32, height: 32,
+            image: selectedIconUrl,
+            width: 32,
+            height: 32,
             verticalOrigin: Cesium.VerticalOrigin.CENTER,
             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
           });
         });
-        viewer.dataSources.add(currentDataSource);
+        datasets[dsId] = {
+          id: dsId,
+          name: pendingName,
+          data: pendingGeojson,
+          iconUrl: selectedIconUrl,
+          dataSource: dataSource
+        };
+        updateDatasetsList();
+        alert('資料集 "' + pendingName + '" 已匯入，可點選顯示！');
+        // 清除暫存，避免連續誤加
+        pendingGeojson = null; pendingName = '';
+        document.getElementById("RepairFileInput").value = '';
+      } catch(e) {
+        alert('GeoJSON 載入失敗');
       }
-    }
-
-    // 選擇下拉選單的資料後不立即載入，而是等使用者按下「確認按鈕」後才載入選擇的資料
-    let selectedDataId = null;
-
-    document.getElementById("RepairSelect").onchange = function() {
-      selectedDataId = this.value;  // 記錄目前選擇的值
-      // 這裡不載入資料，也不清除資料，等按下確認按鈕
     };
 
-    document.getElementById("confirmImportBtn").addEventListener("click", function () {
-      if (!selectedDataId) {
-        alert("請先選擇資料集！");
-        return;
+    // 4. 資料集清單功能/動態切換
+    function updateDatasetsList() {
+      const list = document.getElementById("datasetsList");
+      list.innerHTML = '';
+      for(const id in datasets) {
+        const li = document.createElement('li');
+        li.textContent = datasets[id].name;
+        li.style.cursor = 'pointer';
+        li.onclick = () => showDataset(id);
+        // 增加刪除按鈕
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '刪除';
+        delBtn.style.marginLeft = '10px';
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          removeDataset(id);
+        };
+        li.appendChild(delBtn);
+        list.appendChild(li);
       }
-
-      removeRepairData(); // 清除現有資料
-
-      if (selectedDataId === "default") {
-        addRepairData(); // 載入預設資料
-      } else if (customRepairFiles[selectedDataId]) {
-        loadCustomRepairData(customRepairFiles[selectedDataId]);
+    }
+    function showDataset(id) {
+      if(currentDatasetId && datasets[currentDatasetId]) {
+        viewer.dataSources.remove(datasets[currentDatasetId].dataSource);
       }
+      currentDatasetId = id;
+      viewer.dataSources.add(datasets[id].dataSource);
+    }
+    function removeDataset(id) {
+      if(currentDatasetId === id) {
+        viewer.dataSources.remove(datasets[id].dataSource);
+        currentDatasetId = null;
+      }
+      delete datasets[id];
+      updateDatasetsList();
+    }
 
-      alert("資料載入完成！");
-    });
+    // 5. 清除所有
+    document.getElementById('clearBtn').onclick = function() {
+      if (confirm('確定清除所有資料？')) {
+        Object.values(datasets).forEach(ds => viewer.dataSources.remove(ds.dataSource));
+        datasets = {};
+        pendingGeojson = null; pendingName = '';
+        currentDatasetId = null;
+        updateDatasetsList();
+      }
+    };
     
     // 初始化：載入記憶體中的資料
     loadStoredData();

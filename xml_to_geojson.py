@@ -2,7 +2,7 @@ import xmltodict
 import geopandas as gpd
 from shapely.geometry import Point
 
-with open("D:/Ting/javascript/repairdata.xml", 'r', encoding='utf-8') as file:
+with open("D:/Ting/路燈資料/中區路燈_.xlsx", 'r', encoding='utf-8') as file:
     xml_content = file.read()
 
 # 解析 XML 成 Python 字典
