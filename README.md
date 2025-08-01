@@ -13,5 +13,8 @@
   - cesium_v4：延續cesium_v3，新增偵測使用者的定位並顯示該使用者所在縣市之建築物
   https://wenting150412.github.io/intern_practice/cesium_v4_position.html
   
-  - cesium_v5：載入資料
+  - cesium_v5：讓使用者匯入資料
+  https://wenting150412.github.io/intern_practice/cesium_v5_data.html
+
+  - cesium_v6：讓使用者匯入資料並匯入icon以種在地圖上(像是人孔蓋圖案、路燈圖案等等)(努力中...)
   https://wenting150412.github.io/intern_practice/cesium_v5_data.html
