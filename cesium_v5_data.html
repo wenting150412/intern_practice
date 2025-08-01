@@ -117,9 +117,8 @@
     let pendingName = '';
     let datasets = {}; // 存放 {id, name, data, iconUrl, dataSource}
     let geojsonDataSource = null;
-    let repairDataVisible = false;
     let customRepairFiles = {};
-    let RepairEntities = [];
+    // let RepairEntities = [];
     let currentDataSource = null; // 目前顯示中的Cesium.DataSource
     let selectedIconUrl = "https://cdn-icons-png.flaticon.com/512/3756/3756712.png"; // 預設圖示
 
@@ -202,7 +201,6 @@
         li.textContent = datasets[id].name;
         li.style.cursor = 'pointer';
         li.onclick = () => showDataset(id);
-        // 增加刪除按鈕
         const delBtn = document.createElement('button');
         delBtn.textContent = '刪除';
         delBtn.style.marginLeft = '10px';
@@ -214,6 +212,7 @@
         list.appendChild(li);
       }
     }
+
     // function showDataset(id) {
     //   if(currentDatasetId && datasets[currentDatasetId]) {
     //     viewer.dataSources.remove(datasets[currentDatasetId].dataSource);
@@ -355,27 +354,27 @@
     exportBtn.addEventListener('click', exportCurrentData);
     document.getElementById("RepairDropdownPanel").appendChild(exportBtn);
 
-    // 統計資訊顯示
-    function updateStatistics() {
-      const totalCustomFiles = Object.keys(customRepairFiles).length;
-      const totalEntities = RepairEntities.length;
-      const totalDataSources = viewer.dataSources.length;
+    // // 統計資訊顯示
+    // function updateStatistics() {
+    //   const totalCustomFiles = Object.keys(customRepairFiles).length;
+    //   const totalEntities = RepairEntities.length;
+    //   const totalDataSources = viewer.dataSources.length;
       
-      // 更新或創建統計資訊顯示元素
-      let statsDiv = document.getElementById('statsInfo');
-      if (!statsDiv) {
-        statsDiv = document.createElement('div');
-        statsDiv.id = 'statsInfo';
-        statsDiv.style.cssText = 'margin-top: 10px; font-size: 12px; color: #666; border-top: 1px solid #ccc; padding-top: 5px;';
-        document.getElementById("RepairDropdownPanel").appendChild(statsDiv);
-      }
+    //   // 更新或創建統計資訊顯示元素
+    //   let statsDiv = document.getElementById('statsInfo');
+    //   if (!statsDiv) {
+    //     statsDiv = document.createElement('div');
+    //     statsDiv.id = 'statsInfo';
+    //     statsDiv.style.cssText = 'margin-top: 10px; font-size: 12px; color: #666; border-top: 1px solid #ccc; padding-top: 5px;';
+    //     document.getElementById("RepairDropdownPanel").appendChild(statsDiv);
+    //   }
       
-      statsDiv.innerHTML = `
-        <div>自訂檔案：${totalCustomFiles} 個</div>
-        <div>實體數量：${totalEntities} 個</div>
-        <div>資料源：${totalDataSources} 個</div>
-      `;
-    }
+    //   statsDiv.innerHTML = `
+    //     <div>自訂檔案：${totalCustomFiles} 個</div>
+    //     <div>實體數量：${totalEntities} 個</div>
+    //     <div>資料源：${totalDataSources} 個</div>
+    //   `;
+    // }
 
     // 定期更新統計資訊
     setInterval(updateStatistics, 2000);
