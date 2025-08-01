@@ -278,3 +278,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# 因為是在anaconda裡面跑，所以可以直接執行下面這樣
+# & D:/Anacoda/envs/ting/python.exe 原始檔案路徑 "xlsx檔案名稱" -o "轉換後欲設定之檔案名稱"
