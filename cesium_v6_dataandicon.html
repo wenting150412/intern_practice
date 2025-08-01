@@ -166,16 +166,56 @@
               verticalOrigin: Cesium.VerticalOrigin.CENTER,
               heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
             });
-          } else if (selectedIconType === "model") {
-            entity.billboard = undefined;
-            entity.model = new Cesium.ModelGraphics({
-              uri: selectedIconValue,
-              scale: 1.0,
-              minimumPixelSize: 32,
-              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-              runAnimations: false
-            });
-          }
+        //   } else if (selectedIconType === "model") {
+        //     entity.billboard = undefined;
+        //     // entity.model = new Cesium.ModelGraphics({
+        //     //   uri: selectedIconValue,
+        //     //   scale: 1.0,
+        //     //   minimumPixelSize: 32,
+        //     //   heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        //     //   runAnimations: false
+        //     // });
+
+        //     entity.model = new Cesium.ModelGraphics({
+        //     uri: selectedIconValue,
+        //     heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        //     runAnimations: false
+        //     });
+
+        //     // 等模型載入完成後，根據 boundingSphere 自動調整比例
+        //     entity.model.readyPromise.then(model => {
+        //     const boundingSphere = model.boundingSphere;
+        //     const currentSize = boundingSphere.radius * 2;  // 模型直徑
+        //     const targetSizeMeters = 2.0;                   // 你希望模型實際大小 (公尺)
+        //     const scale = targetSizeMeters / currentSize;
+        //     entity.model.scale = scale;
+        //     console.log(`模型自動縮放完成: 原始大小=${currentSize.toFixed(2)}m, 設定為=${targetSizeMeters}m`);
+        //     });
+            } else if (selectedIconType === "model") {
+                entity.billboard = undefined;
+
+                const position = Cesium.Property.getValueOrUndefined(entity.position, Cesium.JulianDate.now());
+
+                // 建立 Primitive 模型
+                const modelPrimitive = Cesium.Model.fromGltf({
+                    url: selectedIconValue,
+                    modelMatrix: Cesium.Transforms.eastNorthUpToFixedFrame(position),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                });
+
+                // 模型載入完成後自動縮放
+                modelPrimitive.readyPromise.then(model => {
+                    const boundingSphere = model.boundingSphere;
+                    const currentSize = boundingSphere.radius * 2;   // 模型直徑
+                    const targetSizeMeters = 2.0;                    // 目標大小 (公尺)
+                    const scale = targetSizeMeters / currentSize;
+                    modelPrimitive.scale = scale;
+                    console.log(`✅ 模型縮放完成: 原始大小=${currentSize.toFixed(2)}m → 設定為=${targetSizeMeters}m`);
+                });
+
+                // 加入場景
+                viewer.scene.primitives.add(modelPrimitive);
+            }
         });
         datasets[dsId] = {
           id: dsId,
@@ -214,73 +254,43 @@
       }
     }
 
-    // function showDataset(id) {
-    //   if (currentDataSource) {
-    //     viewer.dataSources.remove(currentDataSource);
-    //   }
-    //   currentDataSource = datasets[id].dataSource;
-    //   viewer.dataSources.add(currentDataSource);
-    //   viewer.flyTo(currentDataSource, {
-    //     duration: 2,
-    //     offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-90), 5000)
-    //   })
-    // }
+    function showDataset(id) {
+        if (currentDataSource) {
+            viewer.dataSources.remove(currentDataSource);
+        }
+        currentDataSource = datasets[id].dataSource;
+        viewer.dataSources.add(currentDataSource);
 
-    // function showDataset(id) {
-    //     if (currentDataSource) {
-    //         viewer.dataSources.remove(currentDataSource);
-    //     }
-    //     currentDataSource = datasets[id].dataSource;
-    //     viewer.dataSources.add(currentDataSource);
-
-        // const extent = currentDataSource.entities.computeBoundingSphere(new Cesium.BoundingSphere());
-        // viewer.camera.flyTo({
-        //     destination: extent.center,
-        //     orientation: {l
-        //     heading: 0,
-        //     pitch: Cesium.Math.toRadians(-90),
-        //     roll: 0
-        //     }
-        // });
-
-        function showDataset(id) {
-            if (currentDataSource) {
-                viewer.dataSources.remove(currentDataSource);
+        // 取出所有 entity 的位置
+        const positions = [];
+        currentDataSource.entities.values.forEach(entity => {
+            if (entity.position) {
+            const pos = Cesium.Property.getValueOrUndefined(entity.position, Cesium.JulianDate.now());
+            if (pos) positions.push(pos);
+            } else if (entity.polygon) {
+            const hierarchy = entity.polygon.hierarchy.getValue(Cesium.JulianDate.now());
+            if (hierarchy && hierarchy.positions) positions.push(...hierarchy.positions);
             }
-            currentDataSource = datasets[id].dataSource;
-            viewer.dataSources.add(currentDataSource);
+        });
 
-            // 取出所有 entity 的位置
-            const positions = [];
-            currentDataSource.entities.values.forEach(entity => {
-                if (entity.position) {
-                const pos = Cesium.Property.getValueOrUndefined(entity.position, Cesium.JulianDate.now());
-                if (pos) positions.push(pos);
-                } else if (entity.polygon) {
-                const hierarchy = entity.polygon.hierarchy.getValue(Cesium.JulianDate.now());
-                if (hierarchy && hierarchy.positions) positions.push(...hierarchy.positions);
+        if (positions.length > 0) {
+            const boundingSphere = Cesium.BoundingSphere.fromPoints(positions);
+            viewer.camera.flyToBoundingSphere(boundingSphere, {
+            duration: 2,
+            offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-90), boundingSphere.radius * 2)
+            });
+        } else {
+            // 沒有位置時飛到台灣
+            viewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 350000),
+                orientation: {
+                    heading: 0,
+                    pitch: Cesium.Math.toRadians(-90),
+                    roll: 0
                 }
             });
-
-            if (positions.length > 0) {
-                const boundingSphere = Cesium.BoundingSphere.fromPoints(positions);
-                viewer.camera.flyToBoundingSphere(boundingSphere, {
-                duration: 2,
-                offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-90), boundingSphere.radius * 2)
-                });
-            } else {
-                // 沒有位置時飛到台灣
-                viewer.camera.flyTo({
-                    destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 350000),
-                    orientation: {
-                        heading: 0,
-                        pitch: Cesium.Math.toRadians(-90),
-                        roll: 0
-                    }
-                });
-            }
         }
-    // }
+    }
 
     function removeDataset(id) {
       if (datasets[id]) {
@@ -330,7 +340,7 @@
       }
     });
 
-    document.getElementById("RepairDropdownPanel").appendChild(clearBtn);
+    // document.getElementById("RepairDropdownPanel").appendChild(clearBtn);
 
     // 定期更新統計資訊
     setInterval(updateStatistics, 2000);
