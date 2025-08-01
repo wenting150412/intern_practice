@@ -343,7 +343,7 @@
     // document.getElementById("RepairDropdownPanel").appendChild(clearBtn);
 
     // 定期更新統計資訊
-    // setInterval(updateStatistics, 2000);
+    setInterval(updateStatistics, 2000);
 
     // 視角控制優化
     function flyToData() {
@@ -372,7 +372,7 @@
     flyToBtn.textContent = '飛到資料位置';
     flyToBtn.style.cssText = 'margin-top: 5px; width: 100%; background-color: #17a2b8; color: white; border: none; padding: 5px; border-radius: 3px; cursor: pointer;';
     flyToBtn.addEventListener('click', flyToData);
-    // document.getElementById("RepairDropdownPanel").appendChild(flyToBtn);
+    document.getElementById("RepairDropdownPanel").appendChild(flyToBtn);
 
     // 錯誤處理和日誌記錄
     window.addEventListener('error', function(event) {
