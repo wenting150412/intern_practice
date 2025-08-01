@@ -1,439 +1,421 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <title>Cesium 載入資料及3d icon</title>
-  <script src="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Cesium.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
-  <style>
-    html, body, #cesiumContainer { width:100%; height:100%; margin:0; padding:0; overflow:hidden;}
-  </style>
+  <meta charset="UTF-8" />
+  <title>Cesium 載入資料及3d icon</title>
+  <script src="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Cesium.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
+  <style>
+    html, body, #cesiumContainer { width:100%; height:100%; margin:0; padding:0; overflow:hidden;}
+  </style>
 </head>
 <body>
-  <div id="cesiumContainer"></div>
-  <!-- 控制面板 -->
-  <div id="controlPanel" style="position:absolute;top:10px;left:10px;z-index:100;background:rgba(255,255,255,0.9);padding:10px;border-radius:5px;width:210px;font-size:14px;">
-    <!-- 檔案上傳 -->
-    <label for="RepairFileInput">上傳資料集</label>
-    <input type="file" id="RepairFileInput" accept=".json,.geojson" style="width:100%;margin-bottom:5px;"/>
+  <div id="cesiumContainer"></div>
+  <!-- 控制面板 -->
+  <div id="controlPanel" style="position:absolute;top:10px;left:10px;z-index:100;background:rgba(255,255,255,0.9);padding:10px;border-radius:5px;width:210px;font-size:14px;">
+    <!-- 檔案上傳 -->
+    <label for="RepairFileInput">上傳資料集</label>
+    <input type="file" id="RepairFileInput" accept=".json,.geojson" style="width:100%;margin-bottom:5px;"/>
 
-    <!-- 圖示選擇 -->
-    <div id="iconChooser" style="margin-bottom:5px;">
-      <strong>選擇圖示：</strong>
-      <div style="display:flex;gap:4px;margin-top:4px;"></div>
-    </div>
-    <button id="confirmImportBtn" style="width:100%">確認匯入</button>
-    <div>
-      <strong>已匯入資料集：</strong>
-      <ul id="datasetsList" style="padding-left:20px;"></ul>
-    </div>
-  </div>
-  <button id="clearBtn" style="margin-top:5px;width:100%;background-color:#dc3545;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;">
-  清除所有資料
-  </button>
 
-  <script>
-    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
+    <!-- 圖示選擇 -->
+    <div id="iconChooser" style="margin-bottom:5px;">
+      <strong>選擇圖示：</strong>
+      <div style="display:flex;gap:4px;margin-top:4px;"></div>
+    </div>
+    <button id="confirmImportBtn" style="width:100%">確認匯入</button>
+    <div>
+      <strong>已匯入資料集：</strong>
+      <ul id="datasetsList" style="padding-left:20px;"></ul>
+    </div>
+  </div>
+  <button id="clearBtn" style="margin-top:5px;width:100%;background-color:#dc3545;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;">
+  清除所有資料
+  </button>
 
-    const viewer = new Cesium.Viewer('cesiumContainer', {
-      terrain: Cesium.Terrain.fromWorldTerrain(),
-      animation: false,
-      baseLayerPicker: false,
-      timeline: false,
-      baseLayer: Cesium.ImageryLayer.fromProviderAsync(
-        Cesium.ArcGisMapServerImageryProvider.fromUrl("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer")
-      )
-    });
 
-    viewer.scene.globe.depthTestAgainstTerrain = true;
+  <script>
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
 
-    // 等場景準備好後再設定
-    viewer.scene.postRender.addEventListener(function once() {
-      viewer.camera.setView({
-        destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 350000),
-        orientation: {
-          heading: Cesium.Math.toRadians(0),
-          pitch: Cesium.Math.toRadians(-90), // 完全垂直俯視
-          roll: 0
-        }
-      });
-      // 移除監聽器，避免每次渲染都重置相機
-      viewer.scene.postRender.removeEventListener(once);
-    });
 
-    // 電子地圖圖層 (內政部 WMTS)
-    const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
-      new Cesium.UrlTemplateImageryProvider({
-        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
-        tilingScheme: new Cesium.WebMercatorTilingScheme(),
-        maximumLevel: 18
-      })
-    );
-    emapWmtsLayer.show = true;
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+      terrain: Cesium.Terrain.fromWorldTerrain(),
+      animation: false,
+      baseLayerPicker: false,
+      timeline: false,
+      baseLayer: Cesium.ImageryLayer.fromProviderAsync(
+        Cesium.ArcGisMapServerImageryProvider.fromUrl("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer")
+      )
+    });
 
-    // ---- 資料與狀態變數 ----
-    let pendingGeojson = null, pendingName = '';
-    let datasets = {}; // { id, name, data, iconType, iconValue, dataSource }
-    let currentDataSource = null;
-    let selectedIconType = "", selectedIconValue = "";
 
-    // ---- 圖示/模型選擇清單 ----
-    const iconOptions = [
-      {
-        type: "image",
-        label: "警示點",
-        img: "https://cdn-icons-png.flaticon.com/512/3756/3756712.png",
-        value: "https://cdn-icons-png.flaticon.com/512/3756/3756712.png"
-      },
-      {
-        type: "image",
-        label: "地點標記",
-        img: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
-        value: "https://cdn-icons-png.flaticon.com/512/684/684908.png"
-      },
-      {
-        type: "model",
-        label: "3D人孔蓋",
-        img: "./manhole_3dmodel/manhole.jpg",   // 請準備對應縮圖
-        value: "./manhole_3dmodel/manhole.gltf"
-      },
-      {
-        type: "model",
-        label: "3D路燈",
-        img: "./streetlamp_3dmodel/images.jpg",   // 請準備對應縮圖
-        value: "./streetlamp_3dmodel/streetlamp.gltf"
-      }
-      // ...依需求再加其它 glTF
-    ];
+    viewer.scene.globe.depthTestAgainstTerrain = true;
 
-    function buildIconChooser() {
-      const container = document.querySelector("#iconChooser > div");
-      container.innerHTML = "";
-      iconOptions.forEach((opt, idx) => {
-        const img = document.createElement("img");
-        img.src = opt.img;
-        img.width = 32;
-        img.className = "icon-option";
-        img.dataset.type = opt.type;
-        img.dataset.value = opt.value;
-        img.title = opt.label;
-        img.style.cursor = "pointer";
-        img.style.border = idx === 0 ? "2px solid #007BFF" : "2px solid transparent";
-        img.onclick = function() {
-          document.querySelectorAll(".icon-option").forEach(i => i.style.border = "2px solid transparent");
-          img.style.border = "2px solid #007BFF";
-          selectedIconType = opt.type;
-          selectedIconValue = opt.value;
-        };
-        container.appendChild(img);
-      });
-      selectedIconType = iconOptions[0].type;
-      selectedIconValue = iconOptions[0].value;
-    }
-    buildIconChooser();
 
-    document.getElementById("RepairFileInput").addEventListener("change", function(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          pendingGeojson = JSON.parse(e.target.result);
-          pendingName = file.name.replace(/\.[^/.]+$/, "");
-          alert('檔案 "' + pendingName + '" 已暫存，可選圖示後點確認匯入。');
-        } catch {
-          alert('檔案格式錯誤');
-          pendingGeojson = null;
-          pendingName = '';
-        }
-      };
-      reader.readAsText(file);
-    });
+    // 等場景準備好後再設定
+    viewer.scene.postRender.addEventListener(function once() {
+      viewer.camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 350000),
+        orientation: {
+          heading: Cesium.Math.toRadians(0),
+          pitch: Cesium.Math.toRadians(-90), // 完全垂直俯視
+          roll: 0
+        }
+      });
+      // 移除監聽器，避免每次渲染都重置相機
+      viewer.scene.postRender.removeEventListener(once);
+    });
 
-    document.getElementById("confirmImportBtn").onclick = async function() {
-      if (!pendingGeojson) { alert("請先上傳資料集！"); return; }
-      if (!selectedIconValue) { alert("請先選擇圖示！"); return; }
-      const dsId = `ds_${Date.now()}`;
-      try {
-        const dataSource = await Cesium.GeoJsonDataSource.load(pendingGeojson, { clampToGround: true });
-        dataSource.entities.values.forEach(entity => {
-          if (selectedIconType === "image") {
-            entity.model = undefined;
-            entity.billboard = new Cesium.BillboardGraphics({
-              image: selectedIconValue,
-              width: 32,
-              height: 32,
-              verticalOrigin: Cesium.VerticalOrigin.CENTER,
-              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-            });
-          } else if (selectedIconType === "model") {
-            entity.billboard = undefined;
-            // entity.model = new Cesium.ModelGraphics({
-            //   uri: selectedIconValue,
-            //   scale: 1.0,
-            //   minimumPixelSize: 32,
-            //   heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-            //   runAnimations: false
-            // });
 
-            entity.model = new Cesium.ModelGraphics({
-            uri: selectedIconValue,
-            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-            runAnimations: false
-            });
+    // 電子地圖圖層 (內政部 WMTS)
+    const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
+      new Cesium.UrlTemplateImageryProvider({
+        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png",
+        tilingScheme: new Cesium.WebMercatorTilingScheme(),
+        maximumLevel: 18
+      })
+    );
+    emapWmtsLayer.show = true;
 
-            // 等模型載入完成後，根據 boundingSphere 自動調整比例
-            entity.model.readyPromise.then(model => {
-            const boundingSphere = model.boundingSphere;
-            const currentSize = boundingSphere.radius * 2;  // 模型直徑
-            const targetSizeMeters = 2.0;                   // 你希望模型實際大小 (公尺)
-            const scale = targetSizeMeters / currentSize;
-            entity.model.scale = scale;
-            console.log(`模型自動縮放完成: 原始大小=${currentSize.toFixed(2)}m, 設定為=${targetSizeMeters}m`);
-            });
-            // } else if (selectedIconType === "model") {
-            //     entity.billboard = undefined;
 
-            //     const position = Cesium.Property.getValueOrUndefined(entity.position, Cesium.JulianDate.now());
+    // ---- 資料與狀態變數 ----
+    let pendingGeojson = null, pendingName = '';
+    let datasets = {}; // { id, name, data, iconType, iconValue, dataSource }
+    let currentDataSource = null;
+    let selectedIconType = "", selectedIconValue = "";
 
-            //     // 建立 Primitive 模型
-            //     const modelPrimitive = Cesium.Model.fromGltf({
-            //         url: selectedIconValue,
-            //         modelMatrix: Cesium.Transforms.eastNorthUpToFixedFrame(position),
-            //         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-            //     });
 
-            //     // 模型載入完成後自動縮放
-            //     modelPrimitive.readyPromise.then(model => {
-            //         const boundingSphere = model.boundingSphere;
-            //         const currentSize = boundingSphere.radius * 2;   // 模型直徑
-            //         const targetSizeMeters = 2.0;                    // 目標大小 (公尺)
-            //         const scale = targetSizeMeters / currentSize;
-            //         modelPrimitive.scale = scale;
-            //         console.log(`✅ 模型縮放完成: 原始大小=${currentSize.toFixed(2)}m → 設定為=${targetSizeMeters}m`);
-            //     });
+    // ---- 圖示/模型選擇清單 ----
+    const iconOptions = [
+      {
+        type: "image",
+        label: "警示點",
+        img: "https://cdn-icons-png.flaticon.com/512/3756/3756712.png",
+        value: "https://cdn-icons-png.flaticon.com/512/3756/3756712.png"
+      },
+      {
+        type: "image",
+        label: "地點標記",
+        img: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+        value: "https://cdn-icons-png.flaticon.com/512/684/684908.png"
+      },
+      {
+        type: "model",
+        label: "3D人孔蓋",
+        img: "./manhole_3dmodel/manhole_baseColor.png",   // 請準備對應縮圖
+        value: "./manhole_3dmodel/manhole.gltf"
+      },
+      {
+        type: "model",
+        label: "3D路燈",
+        img: "./streetlamp_3dmodel/images.jpg",   // 請準備對應縮圖
+        value: "./streetlamp_3dmodel/streetlamp.gltf"
+      }
+      // ...依需求再加其它 glTF
+    ];
 
-            //     // 加入場景
-            //     viewer.scene.primitives.add(modelPrimitive);
-          }
-        });
-        datasets[dsId] = {
-          id: dsId,
-          name: pendingName,
-          data: pendingGeojson,
-          iconType: selectedIconType,
-          iconValue: selectedIconValue,
-          dataSource: dataSource
-        };
-        updateDatasetsList();
-        alert('資料集 "' + pendingName + '" 已匯入，可點選顯示！');
-        pendingGeojson = null; pendingName = '';
-        document.getElementById("RepairFileInput").value = '';
-      } catch(e) {
-        alert('GeoJSON 載入失敗');
-      }
-    };
 
-    function updateDatasetsList() {
-      const list = document.getElementById("datasetsList");
-      list.innerHTML = '';
-      for(const id in datasets) {
-        const li = document.createElement('li');
-        li.textContent = datasets[id].name;
-        li.style.cursor = 'pointer';
-        li.onclick = () => showDataset(id);
-        const delBtn = document.createElement('button');
-        delBtn.textContent = '刪除';
-        delBtn.style.marginLeft = '10px';
-        delBtn.onclick = (e) => {
-          e.stopPropagation();
-          removeDataset(id);
-        };
-        li.appendChild(delBtn);
-        list.appendChild(li);
-      }
-    }
+    function buildIconChooser() {
+      const container = document.querySelector("#iconChooser > div");
+      container.innerHTML = "";
+      iconOptions.forEach((opt, idx) => {
+        const img = document.createElement("img");
+        img.src = opt.img;
+        img.width = 32;
+        img.className = "icon-option";
+        img.dataset.type = opt.type;
+        img.dataset.value = opt.value;
+        img.title = opt.label;
+        img.style.cursor = "pointer";
+        img.style.border = idx === 0 ? "2px solid #007BFF" : "2px solid transparent";
+        img.onclick = function() {
+          document.querySelectorAll(".icon-option").forEach(i => i.style.border = "2px solid transparent");
+          img.style.border = "2px solid #007BFF";
+          selectedIconType = opt.type;
+          selectedIconValue = opt.value;
+        };
+        container.appendChild(img);
+      });
+      selectedIconType = iconOptions[0].type;
+      selectedIconValue = iconOptions[0].value;
+    }
+    buildIconChooser();
 
-    function showDataset(id) {
-        if (currentDataSource) {
-            viewer.dataSources.remove(currentDataSource);
-        }
-        currentDataSource = datasets[id].dataSource;
-        viewer.dataSources.add(currentDataSource);
 
-        // 取出所有 entity 的位置
-        const positions = [];
-        currentDataSource.entities.values.forEach(entity => {
-            if (entity.position) {
-            const pos = Cesium.Property.getValueOrUndefined(entity.position, Cesium.JulianDate.now());
-            if (pos) positions.push(pos);
-            } else if (entity.polygon) {
-            const hierarchy = entity.polygon.hierarchy.getValue(Cesium.JulianDate.now());
-            if (hierarchy && hierarchy.positions) positions.push(...hierarchy.positions);
-            }
-        });
+    document.getElementById("RepairFileInput").addEventListener("change", function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          pendingGeojson = JSON.parse(e.target.result);
+          pendingName = file.name.replace(/\.[^/.]+$/, "");
+          alert('檔案 "' + pendingName + '" 已暫存，可選圖示後點確認匯入。');
+        } catch {
+          alert('檔案格式錯誤');
+          pendingGeojson = null;
+          pendingName = '';
+        }
+      };
+      reader.readAsText(file);
+    });
 
-        if (positions.length > 0) {
-            const boundingSphere = Cesium.BoundingSphere.fromPoints(positions);
-            viewer.camera.flyToBoundingSphere(boundingSphere, {
-            duration: 2,
-            offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-90), boundingSphere.radius * 2)
-            });
-        } else {
-            // 沒有位置時飛到台灣
-            viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 350000),
-                orientation: {
-                    heading: 0,
-                    pitch: Cesium.Math.toRadians(-90),
-                    roll: 0
-                }
-            });
-        }
-    }
 
-    function removeDataset(id) {
-      if (datasets[id]) {
-        if (datasets[id].dataSource === currentDataSource) {
-          viewer.dataSources.remove(currentDataSource);
-          currentDataSource = null;
-        }
-        delete datasets[id];
-        updateDatasetsList();
-      }
-    }
-    document.getElementById('clearBtn').onclick = function() {
-      if (confirm('確定清除所有資料？')) {
-        Object.values(datasets).forEach(ds => viewer.dataSources.remove(ds.dataSource));
-        datasets = {};
-        pendingGeojson = null; pendingName = '';
-        updateDatasetsList();
-      }
-    };
+    document.getElementById("confirmImportBtn").onclick = async function() {
+      if (!pendingGeojson) { alert("請先上傳資料集！"); return; }
+      if (!selectedIconValue) { alert("請先選擇圖示！"); return; }
+      const dsId = `ds_${Date.now()}`;
+      try {
+        const dataSource = await Cesium.GeoJsonDataSource.load(pendingGeojson, { clampToGround: true });
+        dataSource.entities.values.forEach(entity => {
+          if (selectedIconType === "image") {
+            entity.model = undefined;
+            entity.billboard = new Cesium.BillboardGraphics({
+              image: selectedIconValue,
+              width: 32,
+              height: 32,
+              verticalOrigin: Cesium.VerticalOrigin.CENTER,
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+            });
+          } else if (selectedIconType === "model") {
+            entity.billboard = undefined;
+            entity.model = new Cesium.ModelGraphics({
+              uri: selectedIconValue,
+              scale: 1.0,
+              minimumPixelSize: 32,
+              heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+              runAnimations: false
+            });
+          }
+        });
+        datasets[dsId] = {
+          id: dsId,
+          name: pendingName,
+          data: pendingGeojson,
+          iconType: selectedIconType,
+          iconValue: selectedIconValue,
+          dataSource: dataSource
+        };
+        updateDatasetsList();
+        alert('資料集 "' + pendingName + '" 已匯入，可點選顯示！');
+        pendingGeojson = null; pendingName = '';
+        document.getElementById("RepairFileInput").value = '';
+      } catch(e) {
+        alert('GeoJSON 載入失敗');
+      }
+    };
 
-    // 初始化：載入記憶體中的資料
-    loadStoredData();
 
-    // 地圖點擊事件處理
-    viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(function (click) {
-      const picked = viewer.scene.pick(click.position);
-      if (Cesium.defined(picked) && picked.id) {
-        const entity = picked.id;
-        if (entity.description) {
-          // 顯示詳細資訊視窗
-          viewer.selectedEntity = entity;
-        }
-      }
-    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+    function updateDatasetsList() {
+      const list = document.getElementById("datasetsList");
+      list.innerHTML = '';
+      for(const id in datasets) {
+        const li = document.createElement('li');
+        li.textContent = datasets[id].name;
+        li.style.cursor = 'pointer';
+        li.onclick = () => showDataset(id);
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '刪除';
+        delBtn.style.marginLeft = '10px';
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          removeDataset(id);
+        };
+        li.appendChild(delBtn);
+        list.appendChild(li);
+      }
+    }
 
-    // 清除資料功能
-    function clearAllData() {
-    // 移除 RepairData 點位與圖層
-    removeRepairData();
-    }
 
-    // 清除按鈕設定
-    document.getElementById('clearBtn').addEventListener('click', function() {
-      if (confirm('確定要清除所有自訂資料嗎？')) {
-        clearAllData();
-        alert('已清除所有資料！');
-      }
-    });
+    // function showDataset(id) {
+    //   if (currentDataSource) {
+    //     viewer.dataSources.remove(currentDataSource);
+    //   }
+    //   currentDataSource = datasets[id].dataSource;
+    //   viewer.dataSources.add(currentDataSource);
+    //   viewer.flyTo(currentDataSource, {
+    //     duration: 2,
+    //     offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-90), 5000)
+    //   })
+    // }
 
-    // document.getElementById("RepairDropdownPanel").appendChild(clearBtn);
 
-    // 定期更新統計資訊
-    setInterval(updateStatistics, 2000);
+    function showDataset(id) {
+        if (currentDataSource) {
+            viewer.dataSources.remove(currentDataSource);
+        }
+        currentDataSource = datasets[id].dataSource;
+        viewer.dataSources.add(currentDataSource);
 
-    // 視角控制優化
-    function flyToData() {
-      const selectedValue = document.getElementById("RepairSelect").value;
-      
-      if (selectedValue && customRepairFiles[selectedValue] && customRepairFiles[selectedValue].dataSource) {
-        viewer.flyTo(customRepairFiles[selectedValue].dataSource);
-      } else if (RepairEntities.length > 0) {
-        // 飛到所有實體的包圍盒
-        viewer.flyTo(viewer.entities);
-      } else {
-        // 回到台灣視角
-        viewer.camera.flyTo({
-          destination: Cesium.Cartesian3.fromDegrees(120.65, 24.15, 1000000),
-          orientation: {
-            heading: Cesium.Math.toRadians(0),
-            pitch: Cesium.Math.toRadians(-90),
-            roll: 0
-          }
-        });
-      }
-    }
 
-    // 添加飛到資料按鈕
-    const flyToBtn = document.createElement('button');
-    flyToBtn.textContent = '飛到資料位置';
-    flyToBtn.style.cssText = 'margin-top: 5px; width: 100%; background-color: #17a2b8; color: white; border: none; padding: 5px; border-radius: 3px; cursor: pointer;';
-    flyToBtn.addEventListener('click', flyToData);
-    document.getElementById("RepairDropdownPanel").appendChild(flyToBtn);
+        const extent = currentDataSource.entities.computeBoundingSphere(new Cesium.BoundingSphere());
+        viewer.camera.flyTo({
+            destination: extent.center,
+            orientation: {
+            heading: 0,
+            pitch: Cesium.Math.toRadians(-90),
+            roll: 0
+            }
+        });
+    }
 
-    // 錯誤處理和日誌記錄
-    window.addEventListener('error', function(event) {
-      console.error('全域錯誤:', event.error);
-    });
 
-    // 顯示載入進度
-    function showLoadingProgress(message) {
-      let progressDiv = document.getElementById('loadingProgress');
-      if (!progressDiv) {
-        progressDiv = document.createElement('div');
-        progressDiv.id = 'loadingProgress';
-        progressDiv.style.cssText = `
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: rgba(0,0,0,0.8);
-          color: white;
-          padding: 20px;
-          border-radius: 5px;
-          z-index: 1000;
-          font-size: 16px;
-        `;
-        document.body.appendChild(progressDiv);
-      }
-      progressDiv.textContent = message;
-      progressDiv.style.display = 'block';
-    }
+    function removeDataset(id) {
+      if (datasets[id]) {
+        if (datasets[id].dataSource === currentDataSource) {
+          viewer.dataSources.remove(currentDataSource);
+          currentDataSource = null;
+        }
+        delete datasets[id];
+        updateDatasetsList();
+      }
+    }
+    document.getElementById('clearBtn').onclick = function() {
+      if (confirm('確定清除所有資料？')) {
+        Object.values(datasets).forEach(ds => viewer.dataSources.remove(ds.dataSource));
+        datasets = {};
+        pendingGeojson = null; pendingName = '';
+        updateDatasetsList();
+      }
+    };
 
-    function hideLoadingProgress() {
-      const progressDiv = document.getElementById('loadingProgress');
-      if (progressDiv) {
-        progressDiv.style.display = 'none';
-      }
-    }
 
-    // 滑鼠移動顯示 label
-    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-    handler.setInputAction((movement) => {
-      const picked = viewer.scene.pick(movement.endPosition);
-      viewer.entities.values.forEach((entity) => {
-        if (entity.label) {
-          entity.label.show = (picked && picked.id === entity);
-        }
-      });
-    }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+    // 初始化：載入記憶體中的資料
+    loadStoredData();
 
-    // Home 鍵自訂
-    viewer.homeButton.viewModel.command.beforeExecute.addEventListener(e => {
-      e.cancel = true;
-      viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 300000),
-        orientation: {
-          heading: Cesium.Math.toRadians(0),
-          pitch: Cesium.Math.toRadians(-90),
-          roll: 0
-        }
-      });
-    });
 
-  </script>
+    // 地圖點擊事件處理
+    viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(function (click) {
+      const picked = viewer.scene.pick(click.position);
+      if (Cesium.defined(picked) && picked.id) {
+        const entity = picked.id;
+        if (entity.description) {
+          // 顯示詳細資訊視窗
+          viewer.selectedEntity = entity;
+        }
+      }
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+
+    // 清除資料功能
+    function clearAllData() {
+    // 移除 RepairData 點位與圖層
+    removeRepairData();
+    }
+
+
+    // 清除按鈕設定
+    document.getElementById('clearBtn').addEventListener('click', function() {
+      if (confirm('確定要清除所有自訂資料嗎？')) {
+        clearAllData();
+        alert('已清除所有資料！');
+      }
+    });
+
+
+    document.getElementById("RepairDropdownPanel").appendChild(clearBtn);
+
+
+    // 定期更新統計資訊
+    setInterval(updateStatistics, 2000);
+
+
+    // 視角控制優化
+    function flyToData() {
+      const selectedValue = document.getElementById("RepairSelect").value;
+      
+      if (selectedValue && customRepairFiles[selectedValue] && customRepairFiles[selectedValue].dataSource) {
+        viewer.flyTo(customRepairFiles[selectedValue].dataSource);
+      } else if (RepairEntities.length > 0) {
+        // 飛到所有實體的包圍盒
+        viewer.flyTo(viewer.entities);
+      } else {
+        // 回到台灣視角
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(120.65, 24.15, 1000000),
+          orientation: {
+            heading: Cesium.Math.toRadians(0),
+            pitch: Cesium.Math.toRadians(-90),
+            roll: 0
+          }
+        });
+      }
+    }
+
+
+    // 添加飛到資料按鈕
+    const flyToBtn = document.createElement('button');
+    flyToBtn.textContent = '飛到資料位置';
+    flyToBtn.style.cssText = 'margin-top: 5px; width: 100%; background-color: #17a2b8; color: white; border: none; padding: 5px; border-radius: 3px; cursor: pointer;';
+    flyToBtn.addEventListener('click', flyToData);
+    document.getElementById("RepairDropdownPanel").appendChild(flyToBtn);
+
+
+    // 錯誤處理和日誌記錄
+    window.addEventListener('error', function(event) {
+      console.error('全域錯誤:', event.error);
+    });
+
+
+    // 顯示載入進度
+    function showLoadingProgress(message) {
+      let progressDiv = document.getElementById('loadingProgress');
+      if (!progressDiv) {
+        progressDiv = document.createElement('div');
+        progressDiv.id = 'loadingProgress';
+        progressDiv.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(0,0,0,0.8);
+          color: white;
+          padding: 20px;
+          border-radius: 5px;
+          z-index: 1000;
+          font-size: 16px;
+        `;
+        document.body.appendChild(progressDiv);
+      }
+      progressDiv.textContent = message;
+      progressDiv.style.display = 'block';
+    }
+
+
+    function hideLoadingProgress() {
+      const progressDiv = document.getElementById('loadingProgress');
+      if (progressDiv) {
+        progressDiv.style.display = 'none';
+      }
+    }
+
+
+    // 滑鼠移動顯示 label
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    handler.setInputAction((movement) => {
+      const picked = viewer.scene.pick(movement.endPosition);
+      viewer.entities.values.forEach((entity) => {
+        if (entity.label) {
+          entity.label.show = (picked && picked.id === entity);
+        }
+      });
+    }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+
+    // Home 鍵自訂
+    viewer.homeButton.viewModel.command.beforeExecute.addEventListener(e => {
+      e.cancel = true;
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 300000),
+        orientation: {
+          heading: Cesium.Math.toRadians(0),
+          pitch: Cesium.Math.toRadians(-90),
+          roll: 0
+        }
+      });
+    });
+
+
+  </script>
 </body>
 </html>
