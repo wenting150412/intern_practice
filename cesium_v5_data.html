@@ -213,14 +213,6 @@
       }
     }
 
-    // function showDataset(id) {
-    //   if(currentDatasetId && datasets[currentDatasetId]) {
-    //     viewer.dataSources.remove(datasets[currentDatasetId].dataSource);
-    //   }
-    //   currentDatasetId = id;
-    //   viewer.dataSources.add(datasets[id].dataSource);
-    // }
-
     function showDataset(id) {
       // 1. 清掉 map 上（如果有）的資料集
       if (currentDataSource) {
@@ -229,6 +221,16 @@
       // 2. 把這一筆 dataSource 新增進 map
       currentDataSource = datasets[id].dataSource;
       viewer.dataSources.add(currentDataSource);
+
+      // 3. 鏡頭飛到該資料範圍
+      viewer.flyTo(currentDataSource, {
+        duration: 2,  // 飛行時間 (秒)
+        offset: new Cesium.HeadingPitchRange(
+          0, 
+          Cesium.Math.toRadians(0), 
+          2500 // 距離地面高度
+        )
+      })
     }
 
     // function removeDataset(id) {
