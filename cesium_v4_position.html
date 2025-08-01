@@ -190,13 +190,22 @@
                     });
 
                 let lastHeight = null;
+                // viewer.scene.camera.changed.addEventListener(() => {
+                //     if (!userPoint) return;
+                //     const cameraHeight = viewer.scene.camera.positionCartographic.height;
+                //     // 控制點隨視角遠近自動縮放，公式可調整
+                //     let newSize = Math.max(2, Math.min(32, 350000 / cameraHeight));
+                //     userPoint.point.pixelSize = newSize;
+                //     lastHeight = cameraHeight;
+                // });
                 viewer.scene.camera.changed.addEventListener(() => {
                     if (!userPoint) return;
-                    const cameraHeight = viewer.scene.camera.positionCartographic.height;
-                    // 控制點隨視角遠近自動縮放，公式可調整
-                    let newSize = Math.max(2, Math.min(32, 350000 / cameraHeight));
-                    userPoint.point.pixelSize = newSize;
-                    lastHeight = cameraHeight;
+                    if (userPoint.billboard) {
+                        const cameraHeight = viewer.scene.camera.positionCartographic.height;
+                        let newSize = Math.max(8, Math.min(48, 350000 / cameraHeight));
+                        userPoint.billboard.width = newSize;
+                        userPoint.billboard.height = newSize;
+                    }
                 });
 
                 console.log("載入的縣市 tileset:", cityKey);
