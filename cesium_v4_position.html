@@ -168,16 +168,28 @@
 
                 // // 紅點標記
                 if (userPoint) viewer.entities.remove(userPoint);
+                    // userPoint = viewer.entities.add({
+                    //     position: Cesium.Cartesian3.fromDegrees(lon, lat),
+                    //     point: {
+                    //         pixelSize: 20,
+                    //         color: Cesium.Color.RED,
+                    //         outlineColor: Cesium.Color.WHITE,
+                    //         outlineWidth: 1,
+                    //         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                    //     }
+                    // });
+
                     userPoint = viewer.entities.add({
                         position: Cesium.Cartesian3.fromDegrees(lon, lat),
-                        point: {
-                            pixelSize: 20,
-                            color: Cesium.Color.RED,
-                            outlineColor: Cesium.Color.WHITE,
-                            outlineWidth: 1,
+                        billboard: {
+                            image: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+                            width: 32,
+                            height: 32,
+                            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
                             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
                         }
                     });
+
                 let lastHeight = null;
                 viewer.scene.camera.changed.addEventListener(() => {
                     if (!userPoint) return;

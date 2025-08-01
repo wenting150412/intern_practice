@@ -313,17 +313,11 @@
       });
     });
 
-    // 關閉「不存在」功能和報錯
-    // 移除未定義函數/功能：loadStoredData, setInterval, clearAllData, removeRepairData, updateStatistics等
-    // 保留必要控制元件
-
     // 全域錯誤控制
     window.addEventListener('error', function(event) {
       console.error('全域錯誤:', event.error);
     });
 
-    // 檔案路徑提醒
-    // 若要支援本地gltf請正確UPLOAD，或請搭配CDN範例（上方示範用github路徑）
   </script>
 </body>
 </html>
