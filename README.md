@@ -17,4 +17,4 @@
   https://wenting150412.github.io/intern_practice/cesium_v5_data.html
 
   - cesium_v6：讓使用者匯入資料並匯入icon以種在地圖上(像是人孔蓋圖案、路燈圖案等等)(努力中...)
-  https://wenting150412.github.io/intern_practice/cesium_v5_data.html
+  https://wenting150412.github.io/intern_practice/cesium_v6_dataandicon.html
