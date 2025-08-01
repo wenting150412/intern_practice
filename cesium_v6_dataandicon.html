@@ -226,17 +226,17 @@
     //   })
     // }
 
-    function showDataset(id) {
-        if (currentDataSource) {
-            viewer.dataSources.remove(currentDataSource);
-        }
-        currentDataSource = datasets[id].dataSource;
-        viewer.dataSources.add(currentDataSource);
+    // function showDataset(id) {
+    //     if (currentDataSource) {
+    //         viewer.dataSources.remove(currentDataSource);
+    //     }
+    //     currentDataSource = datasets[id].dataSource;
+    //     viewer.dataSources.add(currentDataSource);
 
         // const extent = currentDataSource.entities.computeBoundingSphere(new Cesium.BoundingSphere());
         // viewer.camera.flyTo({
         //     destination: extent.center,
-        //     orientation: {
+        //     orientation: {l
         //     heading: 0,
         //     pitch: Cesium.Math.toRadians(-90),
         //     roll: 0
@@ -271,17 +271,16 @@
             } else {
                 // 沒有位置時飛到台灣
                 viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 350000),
-                orientation: {
-                    heading: 0,
-                    pitch: Cesium.Math.toRadians(-90),
-                    roll: 0
-                }
+                    destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 350000),
+                    orientation: {
+                        heading: 0,
+                        pitch: Cesium.Math.toRadians(-90),
+                        roll: 0
+                    }
                 });
             }
         }
-
-    }
+    // }
 
     function removeDataset(id) {
       if (datasets[id]) {
