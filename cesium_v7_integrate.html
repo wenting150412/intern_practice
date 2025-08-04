@@ -6,6 +6,7 @@
     <script src="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Cesium.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
     <style>
+        /* html, body, #cesiumContainer { */
         html, body, #cesiumContainer {
             width: 100%;
             height: 100%;
@@ -83,7 +84,9 @@
 
     <div id="cesiumContainer"></div>
     <!-- 控制面板 -->
-    <div id="controlPanel" style="position:absolute;top:10px;left:10px;z-index:100;background:rgba(255,255,255,0.9);padding:10px;border-radius:5px;width:210px;font-size:14px;">
+    <!-- <div id="controlPanel" style="position:absolute;top:10px;left:10px;z-index:100;background:rgba(255,255,255,0.9);padding:10px;border-radius:5px;width:210px;font-size:14px;"> -->
+    <div id="controlPanel">
+
         <!-- 檔案上傳 -->
         <label for="RepairFileInput">上傳資料集</label>
         <input type="file" id="RepairFileInput" accept=".json,.geojson" style="width:100%;margin-bottom:5px;"/>
