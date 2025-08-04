@@ -316,7 +316,9 @@
         });
 
         // 縣市選單事件
-        document.getElementById('citySelect').addEventListener('change', async function () {
+        // document.getElementById('citySelect').addEventListener('change', async function () {
+        document.querySelectorAll('.city-btn').forEach(btn => {
+            btn.addEventListener('click', async function () {
             const selected = this.value;
 
             // 清除現有 tileset
@@ -356,6 +358,7 @@
                 alert("載入失敗：" + error.message);
                 console.error(error);
             }
+            });
         });
 
         // 狀態變數
