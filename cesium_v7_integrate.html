@@ -6,111 +6,115 @@
     <script src="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Cesium.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
     <style>
-        /* html, body, #cesiumContainer { */
-        html, body, #cesiumContainer {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-        /* 縣市選擇器 */
-        #selector {
-            position: absolute;
-            top: 60px;
-            left: 10px;
-            z-index: 100;
-            background: rgba(220, 221, 223, 0.6);
-            padding: 5px 10px;
-            border-radius: 4px;
-        }
-        /* 定位按鈕 */
-        #locateBtn {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 100;
-            background: rgba(220, 221, 223, 0.6);
-            padding: 8px 12px;
-            border-radius: 4px;
-        }
-
-        /* 控制面板 */
         #controlPanel {
             position: absolute;
             top: 10px;
-            left: 250px;  /* 往右移，避免和定位按鈕重疊 */
+            left: 10px;
             z-index: 100;
             background: rgba(255,255,255,0.9);
             padding: 10px;
             border-radius: 5px;
-            width: 220px;
+            width: 230px;
             font-size: 14px;
         }
+
+        .accordion {
+            background-color: #eee;
+            color: #444;
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 16px;
+            transition: 0.4s;
+            border-radius: 3px;
+            margin-bottom: 5px;
+        }
+
+        .accordion.active, .accordion:hover {
+            background-color: #ccc;
+        }
+
+        .panel {
+            padding: 0 10px;
+            display: none;
+            background-color: white;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
     </style>
 </head>
 <body>
-    <div id="cesiumContainer"></div>
-    <button id="locateBtn">定位並載入建築物</button>
+    <div id="cesiumContainer" style="width:100%;height:100%;"></div>
 
-    <div id="selector">
-        <label for="citySelect">選擇縣市：</label>
-        <select id="citySelect">
-        <option value="">-- 請選擇 --</option>
-        <option value="keelung">基隆市</option>
-        <option value="taipei">台北市</option>
-        <option value="new_taipei">新北市</option>
-        <option value="taoyuan">桃園市</option>
-        <option value="hsinchu_city">新竹市</option>
-        <option value="hsinchu_county">新竹縣</option>
-        <option value="miaoli">苗栗縣</option>
-        <option value="taichung">台中市</option>
-        <option value="changhua">彰化縣</option>
-        <option value="nantou">南投縣</option>
-        <option value="yunlin">雲林縣</option>
-        <option value="chiayi_city">嘉義市</option>
-        <option value="chiayi_county">嘉義縣</option>
-        <option value="tainan">台南市</option>
-        <option value="kaohsiung">高雄市</option>
-        <option value="pingtung">屏東縣</option>
-        <option value="taitung">台東縣</option>
-        <option value="hualien">花蓮縣</option>
-        <option value="yilan">宜蘭縣</option>
-        <option value="kinmen">金門縣</option>
-        <option value="penghu">澎湖縣</option>
-        <option value="lienchiang">連江縣</option>
-        </select>
-    </div>
-
-    <div id="cesiumContainer"></div>
-    <!-- 控制面板 -->
-    <!-- <div id="controlPanel" style="position:absolute;top:10px;left:10px;z-index:100;background:rgba(255,255,255,0.9);padding:10px;border-radius:5px;width:210px;font-size:14px;"> -->
     <div id="controlPanel">
+        <button class="accordion">縣市控制</button>
+        <div class="panel">
+            <label for="citySelect">選擇縣市：</label>
+            <select id="citySelect" style="width:100%">
+            <option value="">-- 請選擇 --</option>
+            <option value="keelung">基隆市</option>
+            <option value="taipei">台北市</option>
+            <option value="new_taipei">新北市</option>
+            <option value="taoyuan">桃園市</option>
+            <option value="hsinchu_city">新竹市</option>
+            <option value="hsinchu_county">新竹縣</option>
+            <option value="miaoli">苗栗縣</option>
+            <option value="taichung">台中市</option>
+            <option value="changhua">彰化縣</option>
+            <option value="nantou">南投縣</option>
+            <option value="yunlin">雲林縣</option>
+            <option value="chiayi_city">嘉義市</option>
+            <option value="chiayi_county">嘉義縣</option>
+            <option value="tainan">台南市</option>
+            <option value="kaohsiung">高雄市</option>
+            <option value="pingtung">屏東縣</option>
+            <option value="taitung">台東縣</option>
+            <option value="hualien">花蓮縣</option>
+            <option value="yilan">宜蘭縣</option>
+            <option value="kinmen">金門縣</option>
+            <option value="penghu">澎湖縣</option>
+            <option value="lienchiang">連江縣</option>
+            </select>
+        </div>
 
-        <!-- 檔案上傳 -->
-        <label for="RepairFileInput">上傳資料集</label>
-        <input type="file" id="RepairFileInput" accept=".json,.geojson" style="width:100%;margin-bottom:5px;"/>
-        <!-- 圖示選擇 -->
-        <div id="iconChooser" style="margin-bottom:5px;">
-        <strong>選擇圖示：</strong>
-        <div style="display:flex;gap:4px;margin-top:4px;"></div>
+        <button class="accordion">資料集控制</button>
+        <div class="panel">
+            <label for="RepairFileInput">上傳資料集</label>
+            <input type="file" id="RepairFileInput" accept=".json,.geojson" style="width:100%;margin-bottom:5px;"/>
+            <div id="iconChooser" style="margin-bottom:5px;">
+            <strong>選擇圖示：</strong>
+            <div style="display:flex;gap:4px;margin-top:4px;"></div>
+            </div>
+            <button id="confirmImportBtn" style="width:100%">確認匯入</button>
+            <div>
+            <strong>已匯入資料集：</strong>
+            <ul id="datasetsList" style="padding-left:20px;"></ul>
+            </div>
+            <button id="flyToBtn" style="margin-top:5px;width:100%;background-color:#17a2b8;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;">
+            飛到資料位置
+            </button>
+            <button id="clearBtn" style="margin-top:5px;width:100%;background-color:#dc3545;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;">
+            清除所有資料
+            </button>
         </div>
-        <button id="confirmImportBtn" style="width:100%">確認匯入</button>
-        <div>
-        <strong>已匯入資料集：</strong>
-        <ul id="datasetsList" style="padding-left:20px;"></ul>
-        </div>
-        <!-- 飛到資料按鈕 -->
-        <button id="flyToBtn" style="margin-top:5px;width:100%;background-color:#17a2b8;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;">
-        飛到資料位置
-        </button>
-        <!-- 清除所有資料按鈕 -->
-        <button id="clearBtn" style="margin-top:5px;width:100%;background-color:#dc3545;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;">
-        清除所有資料
-        </button>
     </div>
 
     <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const accordions = document.querySelectorAll(".accordion");
+            accordions.forEach(acc => {
+                acc.addEventListener("click", function () {
+                this.classList.toggle("active");
+                const panel = this.nextElementSibling;
+                panel.style.display = (panel.style.display === "block") ? "none" : "block";
+                });
+            });
+        });
+
         Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
 
         const viewer = new Cesium.Viewer('cesiumContainer', {
