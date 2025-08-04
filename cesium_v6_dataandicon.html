@@ -97,13 +97,15 @@
         type: "model",
         label: "3D人孔蓋",
         img: "./manhole_3dmodel/manhole.jpg",
-        value: "./manhole_3dmodel/manhole.gltf"
+        value: "./manhole_3dmodel/manhole.gltf",
+        scale: 1.5 // 這個模型建議用 1.5 倍
       },
       {
         type: "model",
         label: "3D路燈",
         img: "./streetlamp_3dmodel/images.jpg",
-        value: "./streetlamp_3dmodel/streetlamp.gltf"
+        value: "./streetlamp_3dmodel/streetlamp.gltf",
+        scale: 0.3 // 這個模型建議用 0.3 倍
         // img: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF/Lantern.png",
         // value: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF/Lantern.gltf"
       }
@@ -173,10 +175,12 @@
               heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
             });
           } else if (selectedIconType === "model") {
+            const currentIcon = iconOptions.find(opt => opt.value === selectedIconValue);
+            let targetScale = currentIcon && currentIcon.scale ? currentIcon.scale : 1.0;
             entity.billboard = undefined;
             entity.model = new Cesium.ModelGraphics({
               uri: selectedIconValue,
-              scale: 1.0,
+              scale: targetScale,
               minimumPixelSize: 32,
               heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
               runAnimations: false
