@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8" />
-    <title>Cesium 多縣市 3D Tiles + 使用者定位</title>
+    <title>Cesium 全部整合在一起</title>
     <script src="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Cesium.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/cesium@1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
     <style>
@@ -51,7 +51,7 @@
     <div id="cesiumContainer" style="width:100%;height:100%;"></div>
 
     <div id="controlPanel">
-        <button class="accordion">縣市控制</button>
+        <button class="accordion">縣市選擇</button>
         <div class="panel">
             <label for="citySelect">選擇縣市：</label>
             <select id="citySelect" style="width:100%">
@@ -79,9 +79,12 @@
             <option value="penghu">澎湖縣</option>
             <option value="lienchiang">連江縣</option>
             </select>
+            <button id="locateBtn" style="margin-top:5px;width:100%;background-color:#007BFF;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;">
+                定位並載入建築物
+            </button>
         </div>
 
-        <button class="accordion">資料集控制</button>
+        <button class="accordion">資料集</button>
         <div class="panel">
             <label for="RepairFileInput">上傳資料集</label>
             <input type="file" id="RepairFileInput" accept=".json,.geojson" style="width:100%;margin-bottom:5px;"/>
@@ -108,11 +111,19 @@
             const accordions = document.querySelectorAll(".accordion");
             accordions.forEach(acc => {
                 acc.addEventListener("click", function () {
-                this.classList.toggle("active");
-                const panel = this.nextElementSibling;
-                panel.style.display = (panel.style.display === "block") ? "none" : "block";
+                    accordions.forEach(other => {
+                        if (other !== this) {
+                            other.classList.remove("active");
+                            other.nextElementSibling.style.display = "none";
+                        }
+                    });
+                    this.classList.toggle("active");
+                    const panel = this.nextElementSibling;
+                    panel.style.display = (panel.style.display === "block") ? "none" : "block";
                 });
             });
+
+            buildIconChooser(); // 圖示選擇器初始化
         });
 
         Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
