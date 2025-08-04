@@ -225,17 +225,21 @@
         // 手風琴選單展開收合
         document.querySelectorAll(".accordion").forEach(acc => {
             acc.addEventListener("click", function () {
-                document.querySelectorAll(".accordion").forEach(other => {
-                    if (other !== this) {
-                        other.classList.remove("active");
-                        other.nextElementSibling.style.display = "none";
-                    }
-                });
+                // 先關閉其他同層級的 accordion
+                const siblingAccordions = Array.from(this.parentElement.children)
+                    .filter(el => el.classList && el.classList.contains("accordion") && el !== this);
+                const siblingPanels = siblingAccordions.map(acc => acc.nextElementSibling);
+
+                siblingAccordions.forEach(btn => btn.classList.remove("active"));
+                siblingPanels.forEach(panel => panel.style.display = "none");
+
+                // 切換當前
                 this.classList.toggle("active");
                 const panel = this.nextElementSibling;
                 panel.style.display = (panel.style.display === "block") ? "none" : "block";
             });
         });
+
 
         document.getElementById("locateBtn").addEventListener("click", () => {
             if (!("geolocation" in navigator)) {
