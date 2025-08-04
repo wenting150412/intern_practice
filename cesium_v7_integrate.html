@@ -14,8 +14,10 @@
             background: rgba(255,255,255,0.9);
             padding: 10px;
             border-radius: 5px;
-            width: 230px;
+            width: 240px;
             font-size: 14px;
+            max-height: 95vh;
+            overflow-y: auto;
         }
 
         .accordion {
@@ -30,55 +32,90 @@
             font-size: 16px;
             transition: 0.4s;
             border-radius: 3px;
-            margin-bottom: 5px;
+            margin-top: 5px;
         }
 
-        .accordion.active, .accordion:hover {
-            background-color: #ccc;
-        }
-
+        .accordion.active, .accordion:hover { background-color: #ccc; }
         .panel {
-            padding: 0 10px;
+            padding: 5px;
             display: none;
             background-color: white;
             overflow: hidden;
-            margin-bottom: 5px;
         }
-
+        .city-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .city-btn {
+            flex: 1 1 45%;
+            padding: 5px;
+            background-color: #82a4c8;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .city-btn:hover { background-color: #82a4c8; }
     </style>
 </head>
 <body>
     <div id="cesiumContainer" style="width:100%;height:100%;"></div>
 
     <div id="controlPanel">
-        <button class="accordion">縣市選擇</button>
+        <!-- 縣市選擇 -->
+        <button class="accordion">北部</button>
         <div class="panel">
-            <label for="citySelect">選擇縣市：</label>
-            <select id="citySelect" style="width:100%">
-            <option value="">-- 請選擇 --</option>
-            <option value="keelung">基隆市</option>
-            <option value="taipei">台北市</option>
-            <option value="new_taipei">新北市</option>
-            <option value="taoyuan">桃園市</option>
-            <option value="hsinchu_city">新竹市</option>
-            <option value="hsinchu_county">新竹縣</option>
-            <option value="miaoli">苗栗縣</option>
-            <option value="taichung">台中市</option>
-            <option value="changhua">彰化縣</option>
-            <option value="nantou">南投縣</option>
-            <option value="yunlin">雲林縣</option>
-            <option value="chiayi_city">嘉義市</option>
-            <option value="chiayi_county">嘉義縣</option>
-            <option value="tainan">台南市</option>
-            <option value="kaohsiung">高雄市</option>
-            <option value="pingtung">屏東縣</option>
-            <option value="taitung">台東縣</option>
-            <option value="hualien">花蓮縣</option>
-            <option value="yilan">宜蘭縣</option>
-            <option value="kinmen">金門縣</option>
-            <option value="penghu">澎湖縣</option>
-            <option value="lienchiang">連江縣</option>
-            </select>
+            <div class="city-group">
+                <button class="city-btn" data-city="taipei">台北市</button>
+                <button class="city-btn" data-city="new_taipei">新北市</button>
+                <button class="city-btn" data-city="keelung">基隆市</button>
+                <button class="city-btn" data-city="taoyuan">桃園市</button>
+                <button class="city-btn" data-city="hsinchu_city">新竹市</button>
+                <button class="city-btn" data-city="hsinchu_county">新竹縣</button>
+                <button class="city-btn" data-city="yilan">宜蘭縣</button>
+            </div>
+        </div>
+
+        <button class="accordion">中部</button>
+        <div class="panel">
+            <div class="city-group">
+                <button class="city-btn" data-city="miaoli">苗栗縣</button>
+                <button class="city-btn" data-city="taichung">台中市</button>
+                <button class="city-btn" data-city="changhua">彰化縣</button>
+                <button class="city-btn" data-city="nantou">南投縣</button>
+                <button class="city-btn" data-city="yunlin">雲林縣</button>
+            </div>
+        </div>
+
+        <button class="accordion">南部</button>
+        <div class="panel">
+            <div class="city-group">
+                <button class="city-btn" data-city="chiayi_city">嘉義市</button>
+                <button class="city-btn" data-city="chiayi_county">嘉義縣</button>
+                <button class="city-btn" data-city="tainan">台南市</button>
+                <button class="city-btn" data-city="kaohsiung">高雄市</button>
+                <button class="city-btn" data-city="pingtung">屏東縣</button>
+            </div>
+        </div>
+
+        <button class="accordion">東部</button>
+        <div class="panel">
+            <div class="city-group">
+                <button class="city-btn" data-city="taitung">台東縣</button>
+                <button class="city-btn" data-city="hualien">花蓮縣</button>
+            </div>
+        </div>
+
+        <button class="accordion">離島</button>
+        <div class="panel">
+            <div class="city-group">
+                <button class="city-btn" data-city="kinmen">金門縣</button>
+                <button class="city-btn" data-city="penghu">澎湖縣</button>
+                <button class="city-btn" data-city="lienchiang">連江縣</button>
+            </div>
+        </div>
             <button id="locateBtn" style="margin-top:5px;width:100%;background-color:#7d92a9;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;">
                 定位並載入建築物
             </button>
@@ -107,25 +144,6 @@
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const accordions = document.querySelectorAll(".accordion");
-            accordions.forEach(acc => {
-                acc.addEventListener("click", function () {
-                    accordions.forEach(other => {
-                        if (other !== this) {
-                            other.classList.remove("active");
-                            other.nextElementSibling.style.display = "none";
-                        }
-                    });
-                    this.classList.toggle("active");
-                    const panel = this.nextElementSibling;
-                    panel.style.display = (panel.style.display === "block") ? "none" : "block";
-                });
-            });
-
-            buildIconChooser(); // 圖示選擇器初始化
-        });
-
         Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
 
         const viewer = new Cesium.Viewer('cesiumContainer', {
@@ -190,6 +208,15 @@
         const loadedTilesets = [];
         let currentTileset = null;
         let userPoint = null;
+
+        // 手風琴選單展開收合
+        document.querySelectorAll(".accordion").forEach(acc => {
+            acc.addEventListener("click", function () {
+                this.classList.toggle("active");
+                const panel = this.nextElementSibling;
+                panel.style.display = (panel.style.display === "block") ? "none" : "block";
+            });
+        });
 
         document.getElementById("locateBtn").addEventListener("click", () => {
             if (!("geolocation" in navigator)) {
