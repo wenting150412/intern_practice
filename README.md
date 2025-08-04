@@ -16,5 +16,8 @@
   - cesium_v5：讓使用者匯入資料
   https://wenting150412.github.io/intern_practice/cesium_v5_data.html
 
-  - cesium_v6：讓使用者匯入資料並匯入icon以種在地圖上(像是人孔蓋圖案、路燈圖案等等)(努力中...)
+  - cesium_v6：讓使用者匯入資料並匯入icon以貼合在地圖上(像是人孔蓋圖案、路燈圖案等等)，目前但還沒辦法調整3d model的大小 (已固定路燈及人孔蓋之大小)
   https://wenting150412.github.io/intern_practice/cesium_v6_dataandicon.html
+
+  - cesium_v7：整合v4、v6兩個不同的功能，並優化控制面板的呈現方式(努力中...)
+  https://wenting150412.github.io/intern_practice/cesium_v7_integrate.html
