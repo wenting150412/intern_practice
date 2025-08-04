@@ -98,14 +98,14 @@
         label: "3D人孔蓋",
         img: "./manhole_3dmodel/manhole.jpg",
         value: "./manhole_3dmodel/manhole.gltf",
-        scale: 0.03 // 這個模型建議用 1.5 倍
+        scale: 0.02 // 調整模型倍率
       },
       {
         type: "model",
         label: "3D路燈",
         img: "./streetlamp_3dmodel/images.jpg",
         value: "./streetlamp_3dmodel/streetlamp.gltf",
-        scale: 2 // 這個模型建議用 0.03 倍縮放
+        scale: 2 // 調整模型倍率
         // img: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF/Lantern.png",
         // value: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF/Lantern.gltf"
       }
@@ -237,8 +237,6 @@
         duration: 2,
         offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-90), 5000)
       });
-
-      console.log("模型scale：", entity.model.scale);
     }
 
     // 刪除資料
