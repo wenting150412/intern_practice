@@ -15,7 +15,6 @@
         }
 
         #controlPanel {
-            /* position: absolute; */
             position: fixed;
             top: 10px;
             left: 10px;
@@ -67,12 +66,66 @@
             font-size: 14px;
         }
         .city-btn:hover { background-color: #82a4c8; }
+
+        /* 自訂圖示相關樣式 */
+        .icon-upload-section {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #f9f9f9;
+        }
+
+        .icon-preview {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border: 2px solid #ddd;
+            border-radius: 3px;
+            margin: 5px;
+        }
+
+        .custom-icon-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background: white;
+        }
+
+        .custom-icon-item img {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+            object-fit: cover;
+        }
+
+        .custom-icon-item .icon-info {
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .custom-icon-item .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 6px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .scale-input {
+            width: 60px;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
      <div id="cesiumContainer" style="width:100%; height:100%;"></div>
 
-    <!-- 外層手風琴：3D 建築物匯入 -->
     <div id="controlPanel">
         <button class="accordion">3D 建築物匯入</button>
         <div class="panel">
@@ -138,20 +191,51 @@
         <div class="panel">
             <label for="RepairFileInput">上傳資料集</label>
             <input type="file" id="RepairFileInput" accept=".json,.geojson" style="width:100%;margin-bottom:5px;"/>
+            
             <div id="iconChooser" style="margin-bottom:5px;">
-            <strong>選擇圖示：</strong>
-            <div style="display:flex;gap:4px;margin-top:4px;"></div>
+                <strong>選擇圖示：</strong>
+                
+                <!-- 預設圖示 -->
+                <div style="margin: 5px 0;">
+                    <strong style="font-size: 12px;">預設圖示：</strong>
+                    <div id="defaultIcons" style="display:flex;gap:4px;margin-top:4px;"></div>
+                </div>
+                
+                <!-- 自訂圖示上傳 -->
+                <div class="icon-upload-section">
+                    <strong style="font-size: 12px;">自訂圖示：</strong>
+                    <div style="margin: 5px 0;">
+                        <label for="iconFileInput" style="font-size: 11px;">上傳 2D 圖示 (PNG/JPG)：</label>
+                        <input type="file" id="iconFileInput" accept=".png,.jpg,.jpeg" style="width:100%;font-size:11px;"/>
+                    </div>
+                    <div style="margin: 5px 0;">
+                        <label for="modelFileInput" style="font-size: 11px;">上傳 3D 模型 (GLTF/GLB)：</label>
+                        <input type="file" id="modelFileInput" accept=".gltf,.glb" style="width:100%;font-size:11px;"/>
+                        <label style="font-size: 10px;">縮放比例：</label>
+                        <input type="number" id="modelScale" class="scale-input" value="1.0" step="0.1" min="0.1" max="100"/>
+                    </div>
+                    <button id="uploadIconBtn" style="width:100%;background:#28a745;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;font-size:11px;">
+                        添加自訂圖示
+                    </button>
+                </div>
+                
+                <!-- 自訂圖示清單 -->
+                <div id="customIconsList" style="margin: 5px 0;">
+                    <strong style="font-size: 12px;">已上傳圖示：</strong>
+                    <div id="customIconsContainer"></div>
+                </div>
             </div>
+            
             <button id="confirmImportBtn" style="width:100%">確認匯入</button>
             <div>
-            <strong>已匯入資料集：</strong>
-            <ul id="datasetsList" style="padding-left:20px;"></ul>
+                <strong>已匯入資料集：</strong>
+                <ul id="datasetsList" style="padding-left:20px;"></ul>
             </div>
             <button id="flyToBtn" style="margin-top:5px;width:100%;background-color:#17a2b8;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;">
-            飛到資料位置
+                飛到資料位置
             </button>
             <button id="clearBtn" style="margin-top:5px;width:100%;background-color:#dc3545;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;">
-            清除所有資料
+                清除所有資料
             </button>
         </div>
     </div>
@@ -192,7 +276,7 @@
         viewer.scene.postRender.removeEventListener(once);
         });
 
-        // 縣市對應的 3D Tiles 路徑與定位資訊（依實際需求調整）
+        // 縣市對應的 3D Tiles 路徑與定位資訊
         const tilesetConfigs = {
             taipei: { url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/0/tileset.json', lon: 121.5654, lat: 25.0330, height: 50 },
             taichung: { url: 'https://3dtiles.nlsc.gov.tw/building/tiles3d/1/tileset.json', lon: 120.6839, lat: 24.1371, height: 50 },
@@ -225,7 +309,6 @@
         // 手風琴選單展開收合
         document.querySelectorAll(".accordion").forEach(acc => {
             acc.addEventListener("click", function () {
-                // 先關閉其他同層級的 accordion
                 const siblingAccordions = Array.from(this.parentElement.children)
                     .filter(el => el.classList && el.classList.contains("accordion") && el !== this);
                 const siblingPanels = siblingAccordions.map(acc => acc.nextElementSibling);
@@ -233,13 +316,11 @@
                 siblingAccordions.forEach(btn => btn.classList.remove("active"));
                 siblingPanels.forEach(panel => panel.style.display = "none");
 
-                // 切換當前
                 this.classList.toggle("active");
                 const panel = this.nextElementSibling;
                 panel.style.display = (panel.style.display === "block") ? "none" : "block";
             });
         });
-
 
         document.getElementById("locateBtn").addEventListener("click", () => {
             if (!("geolocation" in navigator)) {
@@ -252,7 +333,6 @@
                 const height = 800;
                 const center = Cesium.Cartesian3.fromDegrees(lon, lat, height);
 
-                // 找最近的縣市
                 function getNearestCity(lon, lat) {
                     let nearest = null;
                     let minDistance = Number.MAX_VALUE;
@@ -287,7 +367,6 @@
                     }
                 });
 
-                // // 紅點標記
                 if (userPoint) viewer.entities.remove(userPoint);
                     userPoint = viewer.entities.add({
                         position: Cesium.Cartesian3.fromDegrees(lon, lat),
@@ -316,12 +395,10 @@
         });
 
         // 縣市選單事件
-        // document.getElementById('citySelect').addEventListener('change', async function () {
         document.querySelectorAll('.city-btn').forEach(btn => {
             btn.addEventListener('click', async function () {
             const selected = this.dataset.city;
 
-            // 清除現有 tileset
             if (currentTileset) {
                 viewer.scene.primitives.remove(currentTileset);
                 const index = loadedTilesets.indexOf(currentTileset);
@@ -329,7 +406,6 @@
                 currentTileset = null;
             }
 
-            // 沒有選擇就不載入
             if (!selected || !tilesetConfigs[selected]) return;
 
             const config = tilesetConfigs[selected];
@@ -343,12 +419,12 @@
                 const position = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height);
 
                 viewer.zoomTo(tileset).then(() => {
-                const center = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height + 5000); // 高一點點
+                const center = Cesium.Cartesian3.fromDegrees(config.lon, config.lat, config.height + 5000);
                 viewer.camera.flyTo({
                     destination: center,
                     orientation: {
-                    heading: Cesium.Math.toRadians(0),       // 面向正北
-                    pitch: Cesium.Math.toRadians(-90),       // 垂直朝下看
+                    heading: Cesium.Math.toRadians(0),
+                    pitch: Cesium.Math.toRadians(-90),
                     roll: 0
                 },
                 duration: 2.5
@@ -365,231 +441,445 @@
         let pendingGeojson = null, pendingName = '';
         let datasets = {}; // 儲存多組資料
         let currentDataSource = null;
-        let selectedIconType = "", selectedIconValue = "";
+        let selectedIconType = "", selectedIconValue = "", selectedIconScale = 1.0;
 
-        // 圖示/模型選項 (建議模型路徑換成CDN，local要自備正確檔案路徑)
-        const iconOptions = [
-        {
-            type: "image",
-            label: "警示點",
-            img: "https://cdn-icons-png.flaticon.com/512/3756/3756712.png",
-            value: "https://cdn-icons-png.flaticon.com/512/3756/3756712.png"
-        },
-        {
-            type: "image",
-            label: "地點標記",
-            img: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
-            value: "https://cdn-icons-png.flaticon.com/512/684/684908.png"
-        },
-        {
-            type: "model",
-            label: "3D人孔蓋",
-            img: "./manhole_3dmodel/manhole.jpg",
-            value: "./manhole_3dmodel/manhole.gltf",
-            scale: 0.02 // 調整模型倍率
-        },
-        {
-            type: "model",
-            label: "3D路燈",
-            img: "./streetlamp_3dmodel/images.jpg",
-            value: "./streetlamp_3dmodel/streetlamp.gltf",
-            scale: 2 // 調整模型倍率
-            // img: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF/Lantern.png",
-            // value: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF/Lantern.gltf"
-        }
+        // 預設圖示選項
+        const defaultIconOptions = [
+            {
+                type: "image",
+                label: "警示點",
+                img: "https://cdn-icons-png.flaticon.com/512/3756/3756712.png",
+                value: "https://cdn-icons-png.flaticon.com/512/3756/3756712.png"
+            },
+            {
+                type: "image",
+                label: "地點標記",
+                img: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+                value: "https://cdn-icons-png.flaticon.com/512/684/684908.png"
+            }
         ];
 
-        // 建立圖示選擇器
-        function buildIconChooser() {
-        const container = document.querySelector("#iconChooser > div");
-        container.innerHTML = "";
-        iconOptions.forEach((opt, idx) => {
-            const img = document.createElement("img");
-            img.src = opt.img;
-            img.width = 32;
-            img.className = "icon-option";
-            img.dataset.type = opt.type;
-            img.dataset.value = opt.value;
-            img.title = opt.label;
-            img.style.cursor = "pointer";
-            img.style.border = idx === 0 ? "2px solid #007BFF" : "2px solid transparent";
-            img.onclick = function() {
-            document.querySelectorAll(".icon-option").forEach(i => i.style.border = "2px solid transparent");
-            img.style.border = "2px solid #007BFF";
-            selectedIconType = opt.type;
-            selectedIconValue = opt.value;
-            };
-            container.appendChild(img);
-        });
-        selectedIconType = iconOptions[0].type;
-        selectedIconValue = iconOptions[0].value;
+        // 自訂圖示儲存
+        let customIconOptions = [];
+
+        // 建立預設圖示選擇器
+        function buildDefaultIconChooser() {
+            const container = document.getElementById("defaultIcons");
+            container.innerHTML = "";
+            defaultIconOptions.forEach((opt, idx) => {
+                const img = document.createElement("img");
+                img.src = opt.img;
+                img.width = 32;
+                img.height = 32;
+                img.className = "icon-option";
+                img.dataset.type = opt.type;
+                img.dataset.value = opt.value;
+                img.dataset.scale = "1.0";
+                img.title = opt.label;
+                img.style.cursor = "pointer";
+                img.style.border = idx === 0 ? "2px solid #007BFF" : "2px solid transparent";
+                img.onclick = function() {
+                    document.querySelectorAll(".icon-option, .custom-icon-option").forEach(i => i.style.border = "2px solid transparent");
+                    img.style.border = "2px solid #007BFF";
+                    selectedIconType = opt.type;
+                    selectedIconValue = opt.value;
+                    selectedIconScale = 1.0;
+                };
+                container.appendChild(img);
+            });
+            
+            // 預設選擇第一個
+            if (defaultIconOptions.length > 0) {
+                selectedIconType = defaultIconOptions[0].type;
+                selectedIconValue = defaultIconOptions[0].value;
+                selectedIconScale = 1.0;
+            }
         }
-        buildIconChooser();
+
+        // 建立自訂圖示清單
+        function buildCustomIconsList() {
+            const container = document.getElementById("customIconsContainer");
+            container.innerHTML = "";
+            
+            customIconOptions.forEach((opt, idx) => {
+                const item = document.createElement("div");
+                item.className = "custom-icon-item";
+                
+                const img = document.createElement("img");
+                img.src = opt.img;
+                img.className = "custom-icon-option";
+                img.dataset.type = opt.type;
+                img.dataset.value = opt.value;
+                img.dataset.scale = opt.scale || "1.0";
+                img.title = opt.label;
+                img.style.cursor = "pointer";
+                img.style.border = "2px solid transparent";
+                img.onclick = function() {
+                    document.querySelectorAll(".icon-option, .custom-icon-option").forEach(i => i.style.border = "2px solid transparent");
+                    img.style.border = "2px solid #007BFF";
+                    selectedIconType = opt.type;
+                    selectedIconValue = opt.value;
+                    selectedIconScale = parseFloat(opt.scale || "1.0");
+                };
+                
+                const info = document.createElement("div");
+                info.className = "icon-info";
+                info.innerHTML = `
+                    <div>${opt.label}</div>
+                    <div style="color: #666;">${opt.type === 'model' ? '3D模型' : '2D圖示'}${opt.type === 'model' ? ' (比例: ' + opt.scale + ')' : ''}</div>
+                `;
+                
+                const deleteBtn = document.createElement("button");
+                deleteBtn.className = "delete-btn";
+                deleteBtn.textContent = "刪除";
+                deleteBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    customIconOptions.splice(idx, 1);
+                    buildCustomIconsList();
+                    // 如果刪除的是當前選中的圖示，重置為預設
+                    if (selectedIconValue === opt.value) {
+                        if (defaultIconOptions.length > 0) {
+                            selectedIconType = defaultIconOptions[0].type;
+                            selectedIconValue = defaultIconOptions[0].value;
+                            selectedIconScale = 1.0;
+                            buildDefaultIconChooser();
+                        }
+                    }
+                };
+                
+                item.appendChild(img);
+                item.appendChild(info);
+                item.appendChild(deleteBtn);
+                container.appendChild(item);
+            });
+        }
+
+        // 初始化圖示選擇器
+        buildDefaultIconChooser();
+        buildCustomIconsList();
+
+        // 自訂圖示上傳處理
+        document.getElementById("uploadIconBtn").addEventListener("click", function() {
+            const iconFile = document.getElementById("iconFileInput").files[0];
+            const modelFile = document.getElementById("modelFileInput").files[0];
+            const scale = parseFloat(document.getElementById("modelScale").value) || 1.0;
+
+            if (!iconFile && !modelFile) {
+                alert("請選擇要上傳的圖示或模型檔案！");
+                return;
+            }
+
+            if (iconFile && modelFile) {
+                alert("請一次只上傳一種類型的檔案！");
+                return;
+            }
+
+            if (iconFile) {
+                // 處理 2D 圖示
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const customIcon = {
+                        type: "image",
+                        label: iconFile.name.replace(/\.[^/.]+$/, ""),
+                        img: e.target.result,
+                        value: e.target.result,
+                        scale: 1.0
+                    };
+                    customIconOptions.push(customIcon);
+                    buildCustomIconsList();
+                    alert(`2D 圖示 "${customIcon.label}" 已添加！`);
+                    
+                    // 清空輸入
+                    document.getElementById("iconFileInput").value = '';
+                };
+                reader.readAsDataURL(iconFile);
+            }
+
+            if (modelFile) {
+                // 處理 3D 模型
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // 創建 Blob URL 用於 3D 模型
+                    const blob = new Blob([e.target.result], {
+                        type: modelFile.type || 'application/octet-stream'
+                    });
+                    const modelUrl = URL.createObjectURL(blob);
+                    
+                    // 使用預設圖示作為 3D 模型的縮圖
+                    const customIcon = {
+                        type: "model",
+                        label: modelFile.name.replace(/\.[^/.]+$/, ""),
+                        img: "https://cdn-icons-png.flaticon.com/512/2103/2103633.png", // 3D 模型圖示
+                        value: modelUrl,
+                        scale: scale,
+                        fileName: modelFile.name
+                    };
+                    customIconOptions.push(customIcon);
+                    buildCustomIconsList();
+                    alert(`3D 模型 "${customIcon.label}" 已添加！縮放比例: ${scale}`);
+                    
+                    // 清空輸入
+                    document.getElementById("modelFileInput").value = '';
+                    document.getElementById("modelScale").value = '1.0';
+                };
+                reader.readAsArrayBuffer(modelFile);
+            }
+        });
 
         // 檔案上傳讀取
         document.getElementById("RepairFileInput").addEventListener("change", function(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-            pendingGeojson = JSON.parse(e.target.result);
-            pendingName = file.name.replace(/\.[^/.]+$/, "");
-            alert('檔案 "' + pendingName + '" 已暫存，可選圖示後點確認匯入。');
-            } catch {
-            alert('檔案格式錯誤');
-            pendingGeojson = null;
-            pendingName = '';
-            }
-        };
-        reader.readAsText(file);
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    pendingGeojson = JSON.parse(e.target.result);
+                    pendingName = file.name.replace(/\.[^/.]+$/, "");
+                    alert('檔案 "' + pendingName + '" 已暫存，可選圖示後點確認匯入。');
+                } catch {
+                    alert('檔案格式錯誤');
+                    pendingGeojson = null;
+                    pendingName = '';
+                }
+            };
+            reader.readAsText(file);
         });
 
         // 確認匯入
         document.getElementById("confirmImportBtn").onclick = async function() {
-        if (!pendingGeojson) { alert("請先上傳資料集！"); return; }
-        if (!selectedIconValue) { alert("請先選擇圖示！"); return; }
-        const dsId = `ds_${Date.now()}`;
-        try {
-            const dataSource = await Cesium.GeoJsonDataSource.load(pendingGeojson, { clampToGround: true });
-            dataSource.entities.values.forEach(entity => {
-            if (selectedIconType === "image") {
-                entity.model = undefined;
-                entity.billboard = new Cesium.BillboardGraphics({
-                image: selectedIconValue,
-                width: 32,
-                height: 32,
-                verticalOrigin: Cesium.VerticalOrigin.CENTER,
-                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-                });
-            } else if (selectedIconType === "model") {
-                const currentIcon = iconOptions.find(opt => opt.value === selectedIconValue);
-                let targetScale = currentIcon && currentIcon.scale ? currentIcon.scale : 1.0;
-                entity.billboard = undefined;
-                entity.model = new Cesium.ModelGraphics({
-                uri: selectedIconValue,
-                scale: targetScale,
-                minimumPixelSize: 1,
-                heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                runAnimations: false
-                });
+            if (!pendingGeojson) { 
+                alert("請先上傳資料集！"); 
+                return; 
             }
-            });
-            datasets[dsId] = {
-            id: dsId,
-            name: pendingName,
-            data: pendingGeojson,
-            iconType: selectedIconType,
-            iconValue: selectedIconValue,
-            dataSource: dataSource
-            };
-            updateDatasetsList();
-            alert('資料集 "' + pendingName + '" 已匯入，可點選顯示！');
-            pendingGeojson = null; pendingName = '';
-            document.getElementById("RepairFileInput").value = '';
-        } catch(e) {
-            alert('GeoJSON 載入失敗');
-        }
+            if (!selectedIconValue) { 
+                alert("請先選擇圖示！"); 
+                return; 
+            }
+            
+            const dsId = `ds_${Date.now()}`;
+            try {
+                const dataSource = await Cesium.GeoJsonDataSource.load(pendingGeojson, { 
+                    clampToGround: true 
+                });
+                
+                dataSource.entities.values.forEach(entity => {
+                    if (selectedIconType === "image") {
+                        entity.model = undefined;
+                        entity.billboard = new Cesium.BillboardGraphics({
+                            image: selectedIconValue,
+                            width: 32,
+                            height: 32,
+                            verticalOrigin: Cesium.VerticalOrigin.CENTER,
+                            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                        });
+                    } else if (selectedIconType === "model") {
+                        entity.billboard = undefined;
+                        entity.model = new Cesium.ModelGraphics({
+                            uri: selectedIconValue,
+                            scale: selectedIconScale,
+                            minimumPixelSize: 1,
+                            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                            runAnimations: false
+                        });
+                    }
+                });
+                
+                // 找到對應的圖示資訊（用於儲存）
+                let iconInfo = defaultIconOptions.find(opt => opt.value === selectedIconValue);
+                if (!iconInfo) {
+                    iconInfo = customIconOptions.find(opt => opt.value === selectedIconValue);
+                }
+                
+                datasets[dsId] = {
+                    id: dsId,
+                    name: pendingName,
+                    data: pendingGeojson,
+                    iconType: selectedIconType,
+                    iconValue: selectedIconValue,
+                    iconScale: selectedIconScale,
+                    iconInfo: iconInfo, // 儲存完整圖示資訊
+                    dataSource: dataSource
+                };
+                
+                updateDatasetsList();
+                alert('資料集 "' + pendingName + '" 已匯入，可點選顯示！');
+                pendingGeojson = null; 
+                pendingName = '';
+                document.getElementById("RepairFileInput").value = '';
+            } catch(e) {
+                alert('GeoJSON 載入失敗: ' + e.message);
+                console.error(e);
+            }
         };
 
         // 更新資料集清單
         function updateDatasetsList() {
-        const list = document.getElementById("datasetsList");
-        list.innerHTML = '';
-        for(const id in datasets) {
-            const li = document.createElement('li');
-            li.textContent = datasets[id].name;
-            li.style.cursor = 'pointer';
-            li.onclick = () => showDataset(id);
-            const delBtn = document.createElement('button');
-            delBtn.textContent = '刪除';
-            delBtn.style.marginLeft = '10px';
-            delBtn.onclick = (e) => {
-            e.stopPropagation();
-            removeDataset(id);
-            };
-            li.appendChild(delBtn);
-            list.appendChild(li);
-        }
+            const list = document.getElementById("datasetsList");
+            list.innerHTML = '';
+            for(const id in datasets) {
+                const dataset = datasets[id];
+                const li = document.createElement('li');
+                
+                // 創建資料集項目，包含圖示預覽
+                const itemDiv = document.createElement('div');
+                itemDiv.style.display = 'flex';
+                itemDiv.style.alignItems = 'center';
+                itemDiv.style.marginBottom = '5px';
+                itemDiv.style.cursor = 'pointer';
+                itemDiv.onclick = () => showDataset(id);
+                
+                // 圖示預覽
+                const iconPreview = document.createElement('img');
+                if (dataset.iconInfo && dataset.iconInfo.img) {
+                    iconPreview.src = dataset.iconInfo.img;
+                } else {
+                    // 備用圖示
+                    iconPreview.src = dataset.iconType === 'model' 
+                        ? "https://cdn-icons-png.flaticon.com/512/2103/2103633.png"
+                        : "https://cdn-icons-png.flaticon.com/512/684/684908.png";
+                }
+                iconPreview.width = 20;
+                iconPreview.height = 20;
+                iconPreview.style.marginRight = '8px';
+                iconPreview.style.objectFit = 'cover';
+                
+                // 資料集名稱和資訊
+                const textDiv = document.createElement('div');
+                textDiv.style.flex = '1';
+                textDiv.innerHTML = `
+                    <div style="font-weight: bold; font-size: 12px;">${dataset.name}</div>
+                    <div style="font-size: 10px; color: #666;">
+                        ${dataset.iconType === 'model' ? '3D模型' : '2D圖示'}
+                        ${dataset.iconType === 'model' ? ` (比例: ${dataset.iconScale})` : ''}
+                    </div>
+                `;
+                
+                // 刪除按鈕
+                const delBtn = document.createElement('button');
+                delBtn.textContent = '刪除';
+                delBtn.style.marginLeft = '10px';
+                delBtn.style.fontSize = '10px';
+                delBtn.style.padding = '2px 6px';
+                delBtn.style.background = '#dc3545';
+                delBtn.style.color = 'white';
+                delBtn.style.border = 'none';
+                delBtn.style.borderRadius = '3px';
+                delBtn.style.cursor = 'pointer';
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    removeDataset(id);
+                };
+                
+                itemDiv.appendChild(iconPreview);
+                itemDiv.appendChild(textDiv);
+                itemDiv.appendChild(delBtn);
+                li.appendChild(itemDiv);
+                list.appendChild(li);
+            }
         }
 
         // 顯示資料集（聚焦）
         function showDataset(id) {
-        if (currentDataSource) {
-            viewer.dataSources.remove(currentDataSource);
-        }
-        currentDataSource = datasets[id].dataSource;
-        viewer.dataSources.add(currentDataSource);
-        // 改用 Cesium 官方推薦的 flyTo
-        viewer.flyTo(currentDataSource, {
-            duration: 2,
-            offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-90), 5000)
-        });
+            if (currentDataSource) {
+                viewer.dataSources.remove(currentDataSource);
+            }
+            currentDataSource = datasets[id].dataSource;
+            viewer.dataSources.add(currentDataSource);
+            
+            // 改用 Cesium 官方推薦的 flyTo
+            viewer.flyTo(currentDataSource, {
+                duration: 2,
+                offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-90), 5000)
+            });
         }
 
         // 刪除資料
         function removeDataset(id) {
-        if (datasets[id]) {
-            if (datasets[id].dataSource === currentDataSource) {
-            viewer.dataSources.remove(currentDataSource);
-            currentDataSource = null;
+            if (datasets[id]) {
+                if (datasets[id].dataSource === currentDataSource) {
+                    viewer.dataSources.remove(currentDataSource);
+                    currentDataSource = null;
+                }
+                
+                // 如果是自訂模型，釋放 Blob URL
+                if (datasets[id].iconType === 'model' && datasets[id].iconValue.startsWith('blob:')) {
+                    URL.revokeObjectURL(datasets[id].iconValue);
+                }
+                
+                delete datasets[id];
+                updateDatasetsList();
             }
-            delete datasets[id];
-            updateDatasetsList();
-        }
         }
 
         document.getElementById('clearBtn').onclick = function() {
-        if (confirm('確定清除所有資料？')) {
-            Object.values(datasets).forEach(ds => viewer.dataSources.remove(ds.dataSource));
-            datasets = {};
-            pendingGeojson = null; pendingName = '';
-            updateDatasetsList();
-        }
+            if (confirm('確定清除所有資料？這將同時清除自訂圖示。')) {
+                // 清除所有資料集
+                Object.values(datasets).forEach(ds => {
+                    viewer.dataSources.remove(ds.dataSource);
+                    // 釋放自訂模型的 Blob URL
+                    if (ds.iconType === 'model' && ds.iconValue.startsWith('blob:')) {
+                        URL.revokeObjectURL(ds.iconValue);
+                    }
+                });
+                datasets = {};
+                
+                // 清除自訂圖示
+                customIconOptions.forEach(opt => {
+                    if (opt.type === 'model' && opt.value.startsWith('blob:')) {
+                        URL.revokeObjectURL(opt.value);
+                    }
+                });
+                customIconOptions = [];
+                
+                pendingGeojson = null; 
+                pendingName = '';
+                updateDatasetsList();
+                buildCustomIconsList();
+                buildDefaultIconChooser(); // 重置預設選擇
+            }
         };
 
         // 飛到目前資料集
         document.getElementById("flyToBtn").onclick = function() {
-        if (currentDataSource) {
-            viewer.flyTo(currentDataSource, {
-            duration: 2,
-            offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-90), 5000)
-            });
-        } else {
-            viewer.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 300000),
-            orientation: {
-                heading: Cesium.Math.toRadians(0),
-                pitch: Cesium.Math.toRadians(-90),
-                roll: 0
+            if (currentDataSource) {
+                viewer.flyTo(currentDataSource, {
+                    duration: 2,
+                    offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-90), 5000)
+                });
+            } else {
+                viewer.camera.flyTo({
+                    destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 300000),
+                    orientation: {
+                        heading: Cesium.Math.toRadians(0),
+                        pitch: Cesium.Math.toRadians(-90),
+                        roll: 0
+                    }
+                });
             }
-            });
-        }
         };
 
         // 點擊顯示描述
         viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(function (click) {
-        const picked = viewer.scene.pick(click.position);
-        if (Cesium.defined(picked) && picked.id) {
-            const entity = picked.id;
-            if (entity.description) {
-            viewer.selectedEntity = entity;
+            const picked = viewer.scene.pick(click.position);
+            if (Cesium.defined(picked) && picked.id) {
+                const entity = picked.id;
+                if (entity.description) {
+                    viewer.selectedEntity = entity;
+                }
             }
-        }
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-        // 滑鼠移動顯示label，針對所有目前掛載 entities
+        // 滑鼠移動顯示label
         const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
         handler.setInputAction((movement) => {
-        let picked = viewer.scene.pick(movement.endPosition);
-        // 依據目前所有的dataSource遍歷
-        Object.values(datasets).forEach(ds => {
-            ds.dataSource.entities.values.forEach((entity) => {
-            if (entity.label) {
-                entity.label.show = (picked && picked.id === entity);
-            }
+            let picked = viewer.scene.pick(movement.endPosition);
+            Object.values(datasets).forEach(ds => {
+                ds.dataSource.entities.values.forEach((entity) => {
+                    if (entity.label) {
+                        entity.label.show = (picked && picked.id === entity);
+                    }
+                });
             });
-        });
         }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
         // Home 鍵自訂
@@ -598,9 +888,9 @@
             viewer.camera.flyTo({
                 destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 300000),
                 orientation: {
-                heading: Cesium.Math.toRadians(0),
-                pitch: Cesium.Math.toRadians(-90),
-                roll: 0
+                    heading: Cesium.Math.toRadians(0),
+                    pitch: Cesium.Math.toRadians(-90),
+                    roll: 0
                 }
             });
         });
