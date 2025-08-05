@@ -121,6 +121,40 @@
             width: 60px;
             margin-left: 10px;
         }
+
+        /* 新增清除按鈕樣式 */
+        .clear-building-btn {
+            margin-top: 5px;
+            width: 100%;
+            background-color: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .clear-building-btn:hover {
+            background-color: #e0a800;
+        }
+
+        .clear-all-btn {
+            margin-top: 10px;
+            width: 100%;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .clear-all-btn:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
@@ -185,6 +219,10 @@
             <button id="locateBtn" style="margin-top:5px;width:100%;background-color:#7d92a9;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;">
                 定位並載入建築物
             </button>
+
+            <button id="clearBuildingsBtn" class="clear-building-btn">
+                清除地圖建築物
+            </button>
         </div>
 
         <button class="accordion">資料集</button>
@@ -238,6 +276,10 @@
                 清除所有資料
             </button>
         </div>
+        <!-- 新增：清除全部按鈕（與3D建築物匯入、資料集同級） -->
+        <button id="clearAllBtn" class="clear-all-btn">
+            🗑️ 清除全部內容
+        </button>
     </div>
 
     <script>
@@ -392,6 +434,35 @@
 
                 console.log("載入的縣市 tileset:", cityKey);
             });
+        });
+
+        // 新增：清除建築物功能
+        document.getElementById("clearBuildingsBtn").addEventListener("click", function() {
+            if (confirm("確定要清除地圖上的所有建築物嗎？")) {
+                // 清除當前 tileset
+                if (currentTileset) {
+                    viewer.scene.primitives.remove(currentTileset);
+                    const index = loadedTilesets.indexOf(currentTileset);
+                    if (index > -1) {
+                        loadedTilesets.splice(index, 1);
+                    }
+                    currentTileset = null;
+                }
+                
+                // 清除所有已載入的 tilesets
+                loadedTilesets.forEach(tileset => {
+                    viewer.scene.primitives.remove(tileset);
+                });
+                loadedTilesets.length = 0;
+                
+                // 清除定位標記
+                if (userPoint) {
+                    viewer.entities.remove(userPoint);
+                    userPoint = null;
+                }
+                
+                alert("已清除地圖上的所有建築物！");
+            }
         });
 
         // 縣市選單事件
@@ -873,6 +944,69 @@
                 });
             }
         };
+
+        // 新增：清除全部功能（包含建築物和資料集）
+        document.getElementById("clearAllBtn").addEventListener("click", function() {
+            if (confirm("⚠️ 確定要清除全部內容嗎？\n\n這將清除：\n• 地圖上的所有建築物\n• 所有已匯入的資料集\n• 所有自訂圖示\n• 定位標記\n\n此操作無法復原！")) {
+                
+                // 1. 清除建築物
+                if (currentTileset) {
+                    viewer.scene.primitives.remove(currentTileset);
+                    currentTileset = null;
+                }
+                loadedTilesets.forEach(tileset => {
+                    viewer.scene.primitives.remove(tileset);
+                });
+                loadedTilesets.length = 0;
+                
+                // 2. 清除定位標記
+                if (userPoint) {
+                    viewer.entities.remove(userPoint);
+                    userPoint = null;
+                }
+                
+                // 3. 清除所有資料集
+                Object.values(datasets).forEach(ds => {
+                    viewer.dataSources.remove(ds.dataSource);
+                    // 釋放自訂模型的 Blob URL
+                    if (ds.iconType === 'model' && ds.iconValue.startsWith('blob:')) {
+                        URL.revokeObjectURL(ds.iconValue);
+                    }
+                });
+                datasets = {};
+                currentDataSource = null;
+                
+                // 4. 清除自訂圖示
+                customIconOptions.forEach(opt => {
+                    if (opt.type === 'model' && opt.value.startsWith('blob:')) {
+                        URL.revokeObjectURL(opt.value);
+                    }
+                });
+                customIconOptions = [];
+                
+                // 5. 重置待處理資料
+                pendingGeojson = null; 
+                pendingName = '';
+                document.getElementById("RepairFileInput").value = '';
+                
+                // 6. 更新 UI
+                updateDatasetsList();
+                buildCustomIconsList();
+                buildDefaultIconChooser();
+                
+                // 7. 相機回到台灣俯視圖
+                viewer.camera.flyTo({
+                    destination: Cesium.Cartesian3.fromDegrees(120.979, 23.755, 350000),
+                    orientation: {
+                        heading: Cesium.Math.toRadians(0),
+                        pitch: Cesium.Math.toRadians(-90),
+                        roll: 0
+                    }
+                });
+                
+                alert("✅ 已清除全部內容！地圖已重置。");
+            }
+        });
 
         // 點擊顯示描述
         viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(function (click) {
