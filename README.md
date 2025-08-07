@@ -4,6 +4,9 @@
 
 
 實習不同版本所屬的功能不同，等全部完成後如果可以再全部整合成一個完整的檔案  
+  - cesium_v1：建立3d地圖 
+  https://wenting150412.github.io/intern_practice/cesium_v1_3map.html
+
   - cesium_v2：建立 3d tiles（載入台中建築物） 
   https://wenting150412.github.io/intern_practice/cesium_v2_building.html
   
