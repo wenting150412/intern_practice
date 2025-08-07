@@ -74,7 +74,7 @@ class XLSXToGeoJSONConverter:
             
         try:
             transformer = Transformer.from_crs(source_crs, target_crs, always_xy=True)
-            # ✅ 正確逐筆轉換
+            # 正確逐筆轉換
             lon_lat = [transformer.transform(float(x), float(y)) for x, y in zip(x_values, y_values)]
             lon_transformed, lat_transformed = zip(*lon_lat)
             logger.info(f"座標轉換成功: {source_crs} -> {target_crs}")
@@ -108,7 +108,7 @@ class XLSXToGeoJSONConverter:
         x_candidates = ['POINT_X', 'longitude', 'lon', 'lng', 'x', 'X', 'east', '經度', 'X座標', 'x座標']
         y_candidates = ['POINT_Y', 'latitude', 'lat', 'y', 'Y', 'north', '緯度', 'Y座標', 'y座標']
 
-        # ✅ 先找完全相同的欄位
+        # 先找完全相同的欄位
         for col in df.columns:
             if col in x_candidates:
                 x_col_found = col
@@ -151,7 +151,7 @@ class XLSXToGeoJSONConverter:
         if source_crs is None:
             source_crs = self.detect_coordinate_system(x_values, y_values)
         
-        # ✅ 正確轉換座標 (lon, lat)
+        # 正確轉換座標 (lon, lat)
         x_transformed, y_transformed = (
             self.transform_coordinates(x_values, y_values, source_crs, 'EPSG:4326')
             if source_crs != 'EPSG:4326' else (x_values, y_values)
@@ -165,7 +165,7 @@ class XLSXToGeoJSONConverter:
             properties = {}
             for col in properties_cols:
                 val = getattr(row, col)
-                # ✅ 把 NaN / Infinity 轉成 None
+                # 把 NaN / Infinity 轉成 None
                 if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
                     val = None
                 properties[col] = val

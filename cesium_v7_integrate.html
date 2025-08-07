@@ -247,10 +247,11 @@
                         <input type="file" id="iconFileInput" accept=".png,.jpg,.jpeg" style="width:100%;font-size:11px;"/>
                     </div>
                     <div style="margin: 5px 0;">
-                        <label for="modelFileInput" style="font-size: 11px;">上傳 3D 模型 (GLTF/GLB)：</label>
-                        <input type="file" id="modelFileInput" accept=".gltf,.glb" style="width:100%;font-size:11px;"/>
-                        <label style="font-size: 10px;">縮放比例：</label>
-                        <input type="number" id="modelScale" class="scale-input" value="1.0" step="0.1" min="0.1" max="100"/>
+                        <label for="modelFileInput" style="font-size: 11px;">上傳 3D 模型：</label>
+                        <input type="file" id="modelFileInput" webkitdirectory directory multiple accept=".gltf,.glb" style="width:100%;font-size:11px;"/>
+                        <div style="font-size: 10px; color: #666; margin-top: 2px;">
+                            • GLB：直接選擇 .glb 檔案<br>
+                            • GLTF：選擇包含 .gltf、.bin、貼圖檔的整個資料夾
                     </div>
                     <button id="uploadIconBtn" style="width:100%;background:#28a745;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;font-size:11px;">
                         添加自訂圖示
@@ -648,15 +649,15 @@
         // 自訂圖示上傳處理
         document.getElementById("uploadIconBtn").addEventListener("click", function() {
             const iconFile = document.getElementById("iconFileInput").files[0];
-            const modelFile = document.getElementById("modelFileInput").files[0];
+            const modelFiles = document.getElementById("modelFileInput").files;
             const scale = parseFloat(document.getElementById("modelScale").value) || 1.0;
 
-            if (!iconFile && !modelFile) {
+            if (!iconFile && modelFiles.length === 0) {
                 alert("請選擇要上傳的圖示或模型檔案！");
                 return;
             }
 
-            if (iconFile && modelFile) {
+            if (iconFile && modelFiles.length > 0) {
                 alert("請一次只上傳一種類型的檔案！");
                 return;
             }
@@ -682,36 +683,176 @@
                 reader.readAsDataURL(iconFile);
             }
 
-            if (modelFile) {
-                // 處理 3D 模型
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // 創建 Blob URL 用於 3D 模型
-                    const blob = new Blob([e.target.result], {
-                        type: modelFile.type || 'application/octet-stream'
-                    });
-                    const modelUrl = URL.createObjectURL(blob);
-                    
-                    // 使用預設圖示作為 3D 模型的縮圖
-                    const customIcon = {
-                        type: "model",
-                        label: modelFile.name.replace(/\.[^/.]+$/, ""),
-                        img: "https://cdn-icons-png.flaticon.com/512/2103/2103633.png", // 3D 模型圖示
-                        value: modelUrl,
-                        scale: scale,
-                        fileName: modelFile.name
+            if (modelFiles.length > 0) {
+                // 處理 3D 模型（資料夾上傳）
+                const files = Array.from(modelFiles);
+                
+                // 檢查是否為單一 GLB 檔案
+                if (files.length === 1 && files[0].name.toLowerCase().endsWith('.glb')) {
+                    // 處理 GLB 檔案（單一檔案）
+                    const glbFile = files[0];
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const blob = new Blob([e.target.result], {
+                            type: 'model/gltf-binary'
+                        });
+                        const modelUrl = URL.createObjectURL(blob);
+                        
+                        const customIcon = {
+                            type: "model",
+                            label: glbFile.name.replace(/\.[^/.]+$/, ""),
+                            img: "https://cdn-icons-png.flaticon.com/512/2103/2103633.png",
+                            value: modelUrl,
+                            scale: scale,
+                            fileName: glbFile.name
+                        };
+                        customIconOptions.push(customIcon);
+                        buildCustomIconsList();
+                        alert(`3D 模型 "${customIcon.label}" 已添加！縮放比例: ${scale}`);
+                        
+                        // 清空輸入
+                        document.getElementById("modelFileInput").value = '';
+                        document.getElementById("modelScale").value = '1.0';
                     };
-                    customIconOptions.push(customIcon);
-                    buildCustomIconsList();
-                    alert(`3D 模型 "${customIcon.label}" 已添加！縮放比例: ${scale}`);
-                    
-                    // 清空輸入
-                    document.getElementById("modelFileInput").value = '';
-                    document.getElementById("modelScale").value = '1.0';
-                };
-                reader.readAsArrayBuffer(modelFile);
+                    reader.readAsArrayBuffer(glbFile);
+                    return;
+                }
+
+                // 檢查 GLTF 資料夾是否包含必要檔案
+                const gltfFile = files.find(f => f.name.toLowerCase().endsWith('.gltf'));
+                const binFiles = files.filter(f => f.name.toLowerCase().endsWith('.bin'));
+                const textureFiles = files.filter(f => 
+                    f.name.toLowerCase().endsWith('.png') || 
+                    f.name.toLowerCase().endsWith('.jpg') || 
+                    f.name.toLowerCase().endsWith('.jpeg')
+                );
+
+                if (!gltfFile) {
+                    alert("請確保資料夾中包含 .gltf 檔案！");
+                    return;
+                }
+
+                if (binFiles.length === 0) {
+                    alert("請確保資料夾中包含 .bin 檔案！");
+                    return;
+                }
+
+                if (textureFiles.length === 0) {
+                    alert("請確保資料夾中包含貼圖檔案（.png 或 .jpg）！");
+                    return;
+                }
+
+                // 處理 GLTF 檔案和相關資源
+                processGltfFiles(files, gltfFile, scale);
             }
         });
+
+        // 處理 GLTF 檔案和相關資源的函數
+        function processGltfFiles(files, gltfFile, scale) {
+            const fileReaders = {};
+            const fileUrls = {};
+            let processedCount = 0;
+            
+            // 為每個檔案創建 Blob URL
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let mimeType = 'application/octet-stream';
+                    
+                    if (file.name.toLowerCase().endsWith('.gltf')) {
+                        mimeType = 'model/gltf+json';
+                    } else if (file.name.toLowerCase().endsWith('.bin')) {
+                        mimeType = 'application/octet-stream';
+                    } else if (file.name.toLowerCase().endsWith('.png')) {
+                        mimeType = 'image/png';
+                    } else if (file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg')) {
+                        mimeType = 'image/jpeg';
+                    }
+                    
+                    const blob = new Blob([e.target.result], { type: mimeType });
+                    const url = URL.createObjectURL(blob);
+                    fileUrls[file.name] = url;
+                    
+                    processedCount++;
+                    
+                    // 所有檔案都處理完畢後
+                    if (processedCount === files.length) {
+                        // 讀取並修改 GLTF 檔案內容
+                        const gltfReader = new FileReader();
+                        gltfReader.onload = function(e) {
+                            try {
+                                const gltfContent = JSON.parse(e.target.result);
+                                
+                                // 更新 GLTF 中的 URI 參考
+                                if (gltfContent.buffers) {
+                                    gltfContent.buffers.forEach(buffer => {
+                                        if (buffer.uri && fileUrls[buffer.uri]) {
+                                            buffer.uri = fileUrls[buffer.uri];
+                                        }
+                                    });
+                                }
+                                
+                                if (gltfContent.images) {
+                                    gltfContent.images.forEach(image => {
+                                        if (image.uri && fileUrls[image.uri]) {
+                                            image.uri = fileUrls[image.uri];
+                                        }
+                                    });
+                                }
+                                
+                                // 創建修改後的 GLTF Blob
+                                const modifiedGltfBlob = new Blob([JSON.stringify(gltfContent)], {
+                                    type: 'model/gltf+json'
+                                });
+                                const gltfUrl = URL.createObjectURL(modifiedGltfBlob);
+                                
+                                // 選擇貼圖檔案作為預覽圖
+                                const textureFile = files.find(f => 
+                                    f.name.toLowerCase().endsWith('.png') || 
+                                    f.name.toLowerCase().endsWith('.jpg') || 
+                                    f.name.toLowerCase().endsWith('.jpeg')
+                                );
+                                
+                                let previewImg = "https://cdn-icons-png.flaticon.com/512/2103/2103633.png";
+                                if (textureFile && fileUrls[textureFile.name]) {
+                                    previewImg = fileUrls[textureFile.name];
+                                }
+                                
+                                const customIcon = {
+                                    type: "model",
+                                    label: gltfFile.name.replace(/\.[^/.]+$/, ""),
+                                    img: previewImg,
+                                    value: gltfUrl,
+                                    scale: scale,
+                                    fileName: gltfFile.name,
+                                    relatedUrls: Object.values(fileUrls) // 儲存所有相關的 URL，用於之後清理
+                                };
+                                
+                                customIconOptions.push(customIcon);
+                                buildCustomIconsList();
+                                alert(`3D 模型 "${customIcon.label}" 已添加！縮放比例: ${scale}`);
+                                
+                                // 清空輸入
+                                document.getElementById("modelFileInput").value = '';
+                                document.getElementById("modelScale").value = '1.0';
+                                
+                            } catch (error) {
+                                alert("GLTF 檔案格式錯誤：" + error.message);
+                                // 清理已創建的 URL
+                                Object.values(fileUrls).forEach(url => URL.revokeObjectURL(url));
+                            }
+                        };
+                        gltfReader.readAsText(gltfFile);
+                    }
+                };
+                
+                if (file.name.toLowerCase().endsWith('.gltf')) {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsArrayBuffer(file);
+                }
+            });
+        }
 
         // 檔案上傳讀取
         document.getElementById("RepairFileInput").addEventListener("change", function(event) {
@@ -912,8 +1053,18 @@
                 
                 // 清除自訂圖示
                 customIconOptions.forEach(opt => {
-                    if (opt.type === 'model' && opt.value.startsWith('blob:')) {
-                        URL.revokeObjectURL(opt.value);
+                    if (opt.type === 'model') {
+                        if (opt.value.startsWith('blob:')) {
+                            URL.revokeObjectURL(opt.value);
+                        }
+                        // 清理 GLTF 相關的所有 URL
+                        if (opt.relatedUrls) {
+                            opt.relatedUrls.forEach(url => {
+                                if (url.startsWith('blob:')) {
+                                    URL.revokeObjectURL(url);
+                                }
+                            });
+                        }
                     }
                 });
                 customIconOptions = [];
