@@ -749,7 +749,6 @@
 
         // 處理 GLTF 檔案和相關資源的函數
         function processGltfFiles(files, gltfFile, scale) {
-            const fileReaders = {};
             const fileUrls = {};
             let processedCount = 0;
             
@@ -771,7 +770,12 @@
                     
                     const blob = new Blob([e.target.result], { type: mimeType });
                     const url = URL.createObjectURL(blob);
-                    fileUrls[file.name] = url;
+                    
+                    // 使用檔案的完整路徑作為 key，但也保留檔名作為備用
+                    const fileName = file.name;
+                    const relativePath = file.webkitRelativePath || file.name;
+                    fileUrls[fileName] = url;
+                    fileUrls[relativePath] = url;
                     
                     processedCount++;
                     
@@ -786,16 +790,28 @@
                                 // 更新 GLTF 中的 URI 參考
                                 if (gltfContent.buffers) {
                                     gltfContent.buffers.forEach(buffer => {
-                                        if (buffer.uri && fileUrls[buffer.uri]) {
-                                            buffer.uri = fileUrls[buffer.uri];
+                                        if (buffer.uri) {
+                                            // 先嘗試完整檔名匹配，再嘗試只用檔名
+                                            const matchedUrl = fileUrls[buffer.uri] || 
+                                                            fileUrls[buffer.uri.split('/').pop()] ||
+                                                            fileUrls[buffer.uri.split('\\').pop()];
+                                            if (matchedUrl) {
+                                                buffer.uri = matchedUrl;
+                                            }
                                         }
                                     });
                                 }
                                 
                                 if (gltfContent.images) {
                                     gltfContent.images.forEach(image => {
-                                        if (image.uri && fileUrls[image.uri]) {
-                                            image.uri = fileUrls[image.uri];
+                                        if (image.uri) {
+                                            // 先嘗試完整檔名匹配，再嘗試只用檔名
+                                            const matchedUrl = fileUrls[image.uri] || 
+                                                            fileUrls[image.uri.split('/').pop()] ||
+                                                            fileUrls[image.uri.split('\\').pop()];
+                                            if (matchedUrl) {
+                                                image.uri = matchedUrl;
+                                            }
                                         }
                                     });
                                 }
@@ -814,8 +830,11 @@
                                 );
                                 
                                 let previewImg = "https://cdn-icons-png.flaticon.com/512/2103/2103633.png";
-                                if (textureFile && fileUrls[textureFile.name]) {
-                                    previewImg = fileUrls[textureFile.name];
+                                if (textureFile) {
+                                    const textureUrl = fileUrls[textureFile.name];
+                                    if (textureUrl) {
+                                        previewImg = textureUrl;
+                                    }
                                 }
                                 
                                 const customIcon = {
@@ -825,7 +844,7 @@
                                     value: gltfUrl,
                                     scale: scale,
                                     fileName: gltfFile.name,
-                                    relatedUrls: Object.values(fileUrls) // 儲存所有相關的 URL，用於之後清理
+                                    relatedUrls: [gltfUrl, ...Object.values(fileUrls)] // 包含主要 URL 和所有相關 URL
                                 };
                                 
                                 customIconOptions.push(customIcon);
@@ -838,6 +857,7 @@
                                 
                             } catch (error) {
                                 alert("GLTF 檔案格式錯誤：" + error.message);
+                                console.error("GLTF parsing error:", error);
                                 // 清理已創建的 URL
                                 Object.values(fileUrls).forEach(url => URL.revokeObjectURL(url));
                             }
@@ -1045,26 +1065,32 @@
                 Object.values(datasets).forEach(ds => {
                     viewer.dataSources.remove(ds.dataSource);
                     // 釋放自訂模型的 Blob URL
-                    if (ds.iconType === 'model' && ds.iconValue.startsWith('blob:')) {
+                    if (ds.iconType === 'model' && ds.iconValue && ds.iconValue.startsWith('blob:')) {
                         URL.revokeObjectURL(ds.iconValue);
+                    }
+                    // 清理資料集中可能的相關 URL
+                    if (ds.iconInfo && ds.iconInfo.relatedUrls) {
+                        ds.iconInfo.relatedUrls.forEach(url => {
+                            if (url && url.startsWith('blob:')) {
+                                URL.revokeObjectURL(url);
+                            }
+                        });
                     }
                 });
                 datasets = {};
                 
                 // 清除自訂圖示
                 customIconOptions.forEach(opt => {
-                    if (opt.type === 'model') {
-                        if (opt.value.startsWith('blob:')) {
-                            URL.revokeObjectURL(opt.value);
-                        }
-                        // 清理 GLTF 相關的所有 URL
-                        if (opt.relatedUrls) {
-                            opt.relatedUrls.forEach(url => {
-                                if (url.startsWith('blob:')) {
-                                    URL.revokeObjectURL(url);
-                                }
-                            });
-                        }
+                    if (opt.type === 'model' && opt.value && opt.value.startsWith('blob:')) {
+                        URL.revokeObjectURL(opt.value);
+                    }
+                    // 清理 GLTF 相關的所有 URL
+                    if (opt.relatedUrls && Array.isArray(opt.relatedUrls)) {
+                        opt.relatedUrls.forEach(url => {
+                            if (url && url.startsWith('blob:')) {
+                                URL.revokeObjectURL(url);
+                            }
+                        });
                     }
                 });
                 customIconOptions = [];
