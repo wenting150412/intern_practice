@@ -252,6 +252,15 @@
                         <div style="font-size: 10px; color: #666; margin-top: 2px;">
                             • GLB：直接選擇 .glb 檔案<br>
                             • GLTF：選擇包含 .gltf、.bin、貼圖檔的整個資料夾
+                        </div>
+                    </div>
+                    <!-- 新增縮放比例輸入欄位 -->
+                    <div style="margin: 5px 0;">
+                        <label for="modelScale" style="font-size: 11px;">3D 模型縮放比例：</label>
+                        <input type="number" id="modelScale" value="1.0" min="0.01" max="100" step="0.01" style="width:100%;font-size:11px;"/>
+                        <div style="font-size: 10px; color: #666; margin-top: 2px;">
+                            預設為 1.0，可調整模型大小（例如：0.5 為縮小一半，2.0 為放大兩倍）
+                        </div>
                     </div>
                     <button id="uploadIconBtn" style="width:100%;background:#28a745;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;font-size:11px;">
                         添加自訂圖示
@@ -562,7 +571,7 @@
                 img.className = "icon-option";
                 img.dataset.type = opt.type;
                 img.dataset.value = opt.value;
-                img.dataset.scale = "1.0";
+                img.dataset.scale = opt.scale || "1.0";
                 img.title = opt.label;
                 img.style.cursor = "pointer";
                 img.style.border = idx === 0 ? "2px solid #007BFF" : "2px solid transparent";
@@ -571,7 +580,7 @@
                     img.style.border = "2px solid #007BFF";
                     selectedIconType = opt.type;
                     selectedIconValue = opt.value;
-                    selectedIconScale = 1.0;
+                    selectedIconScale = parseFloat(opt.scale || "1.0");
                 };
                 container.appendChild(img);
             });
@@ -580,7 +589,7 @@
             if (defaultIconOptions.length > 0) {
                 selectedIconType = defaultIconOptions[0].type;
                 selectedIconValue = defaultIconOptions[0].value;
-                selectedIconScale = 1.0;
+                selectedIconScale = parseFloat(defaultIconOptions[0].scale || "1.0");
             }
         }
 
@@ -629,7 +638,7 @@
                         if (defaultIconOptions.length > 0) {
                             selectedIconType = defaultIconOptions[0].type;
                             selectedIconValue = defaultIconOptions[0].value;
-                            selectedIconScale = 1.0;
+                            selectedIconScale = parseFloat(defaultIconOptions[0].scale || "1.0");
                             buildDefaultIconChooser();
                         }
                     }
@@ -650,7 +659,8 @@
         document.getElementById("uploadIconBtn").addEventListener("click", function() {
             const iconFile = document.getElementById("iconFileInput").files[0];
             const modelFiles = document.getElementById("modelFileInput").files;
-            const scale = parseFloat(document.getElementById("modelScale").value) || 1.0;
+            const scaleElement = document.getElementById("modelScale");
+            const scale = scaleElement ? parseFloat(scaleElement.value) || 1.0 : 1.0;
 
             if (!iconFile && modelFiles.length === 0) {
                 alert("請選擇要上傳的圖示或模型檔案！");
@@ -712,7 +722,7 @@
                         
                         // 清空輸入
                         document.getElementById("modelFileInput").value = '';
-                        document.getElementById("modelScale").value = '1.0';
+                        if (scaleElement) scaleElement.value = '1.0';
                     };
                     reader.readAsArrayBuffer(glbFile);
                     return;
@@ -853,7 +863,8 @@
                                 
                                 // 清空輸入
                                 document.getElementById("modelFileInput").value = '';
-                                document.getElementById("modelScale").value = '1.0';
+                                const scaleElement = document.getElementById("modelScale");
+                                if (scaleElement) scaleElement.value = '1.0';
                                 
                             } catch (error) {
                                 alert("GLTF 檔案格式錯誤：" + error.message);
