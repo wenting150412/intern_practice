@@ -244,8 +244,10 @@
                     <strong style="font-size: 12px;">自訂圖示：</strong>
                     <div style="margin: 5px 0;">
                         <strong style="font-size: 11px;">2D 模型上傳：</strong>
-                        <label for="iconFileInput" style="font-size: 12px;">上傳 2D 圖示 (PNG/JPG)：</label>
-                        <input type="file" id="iconFileInput" accept=".png,.jpg,.jpeg" style="width:100%;font-size:11px;"/>
+                        <div>
+                            <label for="iconFileInput" style="font-size: 12px;">上傳 2D 圖示 (PNG/JPG)：</label>
+                            <input type="file" id="iconFileInput" accept=".png,.jpg,.jpeg" style="width:100%;font-size:11px;"/>
+                        </div>
                     </div>
                     <div style="margin: 5px 0;">
                         <strong style="font-size: 11px;">3D 模型上傳：</strong>
@@ -253,7 +255,7 @@
                         <div style="margin: 5px 0;">
                             <label for="glbFileInput" style="font-size: 12px;">上傳 GLB 檔案：</label>
                             <input type="file" id="glbFileInput" accept=".glb" style="width:100%;font-size:11px;"/>
-                        </div>l
+                        </div>
                         <!-- GLTF 資料夾上傳 -->
                         <div style="margin: 5px 0;">
                             <label for="gltfFolderInput" style="font-size: 11px;">上傳 GLTF 資料夾：</label>
@@ -679,12 +681,6 @@
                 alert("請選擇要上傳的圖示或模型檔案！");
                 return;
             }
-
-            // if (iconFile && modelFiles.length > 0) {
-            // if ((iconFile ? 1 : 0) + (glbFiles.length > 0 ? 1 : 0) + (gltfFiles.length > 0 ? 1 : 0) > 1) {
-            //     alert("請一次只上傳一種類型的檔案！");
-            //     return;
-            // }
 
             // 檢查是否同時選擇了多種類型的檔案
             const fileTypeCount = (iconFile ? 1 : 0) + (glbFiles.length > 0 ? 1 : 0) + (gltfFiles.length > 0 ? 1 : 0);
