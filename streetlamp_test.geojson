@@ -1,0 +1,41 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:4326"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.67854879354827,
+          24.147651994375114
+        ]
+      },
+      "properties": {
+        "LAYER": 8020203,
+        "ID": 20203132276,
+        "ORGAN": "GC7",
+        "OP_CODE": 0,
+        "BURY_DATE": "2018-07-01",
+        "NUM": 342,
+        "LENGTH": 8,
+        "MATERIAL": "金屬桿",
+        "USEMODE": 0,
+        "DATAMODE": 1,
+        "NOTE": "111年9月管線單位權管圖資",
+        "TOWNSHIP": 6600100,
+        "HEIGHT": 83.57,
+        "MOD_DATE": "2023-04-25",
+        "STATE": 1,
+        "DATA1": "2023-04-25",
+        "DATA2": null,
+        "LEVEL": null
+      }
+    }
+  ]
+}
