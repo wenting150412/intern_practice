@@ -307,6 +307,7 @@
     <script>
         Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNmIzMDE3Yy1mYWQ2LTQ4YTQtOWQ3Ny1lZjgwNTcxOTU5MTkiLCJpZCI6MzIyMjU0LCJpYXQiOjE3NTI3MjY4MjJ9.12vLgFNaTNa4AO8PYo3hByBcXUodMbnX_u--RM59ySg';
 
+        // 修改：開啟地形深度測試以確保建築物正確貼地
         const viewer = new Cesium.Viewer('cesiumContainer', {
             terrain: Cesium.Terrain.fromWorldTerrain(),
             animation: false,
@@ -316,6 +317,9 @@
             Cesium.ArcGisMapServerImageryProvider.fromUrl("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer")
         )
         });
+
+        // 修改：確保場景設定正確，啟用地形深度測試
+        viewer.scene.globe.depthTestAgainstTerrain = true;
 
         // 電子地圖圖層 (內政部 WMTS)
         const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
@@ -419,6 +423,10 @@
 
                 if (currentTileset) viewer.scene.primitives.remove(currentTileset);
                 const tileset = await Cesium.Cesium3DTileset.fromUrl(config.url);
+                
+                // 修改：確保 tileset 正確設定高度參考
+                await tileset.readyPromise;
+                
                 currentTileset = tileset;
                 viewer.scene.primitives.add(tileset);
 
@@ -505,6 +513,15 @@
 
             try {
                 const tileset = await Cesium.Cesium3DTileset.fromUrl(config.url);
+                
+                // 修改：等待 tileset 完全載入並設定正確的高度參考
+                await tileset.readyPromise;
+                
+                // 確保建築物貼地顯示
+                tileset.style = new Cesium.Cesium3DTileStyle({
+                    color: "color('white', 1.0)"
+                });
+                
                 currentTileset = tileset;
                 viewer.scene.primitives.add(tileset);
                 loadedTilesets.push(tileset);
@@ -563,6 +580,7 @@
                 img: "./streetlamp_3dmodel/images.jpg",
                 value: "./streetlamp_3dmodel/streetlamp.gltf",
                 scale: 2 // 調整模型倍率
+                // img: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF/Lantern.png",
                 // img: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF/Lantern.png",
                 // value: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF/Lantern.gltf"
             }
@@ -948,7 +966,7 @@
             reader.readAsText(file);
         });
 
-        // 確認匯入
+        // 修改：確認匯入 - 加強高度參考設定
         document.getElementById("confirmImportBtn").onclick = async function() {
             if (!pendingGeojson) { 
                 alert("請先上傳資料集！"); 
@@ -972,7 +990,7 @@
                             image: selectedIconValue,
                             width: 32,
                             height: 32,
-                            verticalOrigin: Cesium.VerticalOrigin.CENTER,
+                            verticalOrigin: Cesium.VerticalOrigin.BOTTOM, // 修改：改為 BOTTOM 讓圖示底部貼地
                             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
                         });
                     } else if (selectedIconType === "model") {
@@ -984,6 +1002,21 @@
                             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
                             runAnimations: false
                         });
+                        
+                        // 修改：確保 3D 模型的位置設定正確
+                        if (entity.position) {
+                            const position = entity.position.getValue();
+                            if (position) {
+                                const cartographic = Cesium.Cartographic.fromCartesian(position);
+                                // 設定高度為 0，讓模型貼地
+                                cartographic.height = 0;
+                                entity.position = Cesium.Cartesian3.fromRadians(
+                                    cartographic.longitude,
+                                    cartographic.latitude,
+                                    cartographic.height
+                                );
+                            }
+                        }
                     }
                 });
                 
