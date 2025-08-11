@@ -318,8 +318,8 @@
         )
         });
 
-        // 修改：確保場景設定正確，啟用地形深度測試
-        viewer.scene.globe.depthTestAgainstTerrain = true;
+        // 修改：關閉地形深度測試，讓建築物正確顯示在地形表面
+        viewer.scene.globe.depthTestAgainstTerrain = false;
 
         // 電子地圖圖層 (內政部 WMTS)
         const emapWmtsLayer = viewer.imageryLayers.addImageryProvider(
@@ -511,16 +511,13 @@
 
             const config = tilesetConfigs[selected];
 
-            try {
+                try {
                 const tileset = await Cesium.Cesium3DTileset.fromUrl(config.url);
                 
-                // 修改：等待 tileset 完全載入並設定正確的高度參考
+                // 修改：等待 tileset 完全載入
                 await tileset.readyPromise;
                 
-                // 確保建築物貼地顯示
-                tileset.style = new Cesium.Cesium3DTileStyle({
-                    color: "color('white', 1.0)"
-                });
+                // 移除樣式設定，讓建築物使用原始外觀
                 
                 currentTileset = tileset;
                 viewer.scene.primitives.add(tileset);
@@ -990,7 +987,7 @@
                             image: selectedIconValue,
                             width: 32,
                             height: 32,
-                            verticalOrigin: Cesium.VerticalOrigin.BOTTOM, // 修改：改為 BOTTOM 讓圖示底部貼地
+                            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
                             heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
                         });
                     } else if (selectedIconType === "model") {
@@ -1003,20 +1000,7 @@
                             runAnimations: false
                         });
                         
-                        // 修改：確保 3D 模型的位置設定正確
-                        if (entity.position) {
-                            const position = entity.position.getValue();
-                            if (position) {
-                                const cartographic = Cesium.Cartographic.fromCartesian(position);
-                                // 設定高度為 0，讓模型貼地
-                                cartographic.height = 0;
-                                entity.position = Cesium.Cartesian3.fromRadians(
-                                    cartographic.longitude,
-                                    cartographic.latitude,
-                                    cartographic.height
-                                );
-                            }
-                        }
+                        // 移除強制設定高度為 0 的程式碼，讓 CLAMP_TO_GROUND 自動處理
                     }
                 });
                 
